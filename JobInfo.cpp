@@ -27,7 +27,7 @@ JobInfo::JobInfo(struct batch_status *job, queue_info *queue) : job_id(),
   custom_name(), comment(), nodespec(), queue(nullptr), qtime(0), stime(0),
   priority(0), account(), group(), state(JobNoState), can_never_run(false),
   can_not_run(false), calculated_fairshare(0), sched_nodespec(),
-  p_planned_nodes(), p_planned_start(0), p_waiting_for(), ginfo(nullptr),
+  p_planned_nodes(), p_planned_start(0), compl_time(0), p_waiting_for(), ginfo(nullptr),
   schedule(), cluster_name(), cluster_mode(ClusterNone), placement(),
   resreq(nullptr), resused(nullptr), p_parsed_nodespec(nullptr)
   {
@@ -101,6 +101,15 @@ JobInfo::JobInfo(struct batch_status *job, queue_info *queue) : job_id(),
       else
         this -> p_planned_start = -1;
       }
+    else if (!strcmp(attrp -> name, ATTR_comp_time))  /* plan-sched: compl time */
+     {
+     count = strtol(attrp -> value, &endp, 10);
+
+     if (*endp != '\n')
+       this -> compl_time = count;
+     else
+       this -> compl_time = -1;
+     }    
     else if (!strcmp(attrp -> name, ATTR_l))    /* resources requested*/
       {
       /* special handling for cluster */

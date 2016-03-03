@@ -796,3 +796,60 @@ int translate_job_fail_code(int fail_code, char *comment_msg, char *log_msg)
   return rc;
   }
 
+/*
+ *
+ * update_job_planned_start - update a jobs planned_start attribute
+ *
+ *   pbs_sd - connection to the pbs_server
+ *   jinfo  - job to update
+ *   comment - the comment string
+ *
+ * returns
+ *   0: comment needed updating
+ *   non-zero: the comment did not need to be updated (same as before etc)
+ *
+ */
+int update_job_planned_start(int pbs_sd, plan_job *job)
+  {
+  /* the pbs_alterjob() call takes a linked list of attrl structures to alter
+   * a job.  All we are interested in doing is changing the comment.
+   */
+
+  JobInfo* jinfo;
+
+  jinfo = job->jinfo;
+
+  struct attrl attr =
+    {
+    NULL, (char*)ATTR_planned_start, NULL, NULL, SET
+    };
+
+  if (jinfo == NULL)
+    return 1;
+
+  /* no need to update the job comment if it is the same */
+  if (jinfo -> p_planned_start != job->start_time)
+    {
+   // if (jinfo -> planned_start != NULL)
+     // free(jinfo -> planned_start);
+
+    char buffer[100];
+
+    if (job->start_time > 946681200)
+      sprintf(buffer, "%ld", job->start_time);
+    else {
+      sprintf(buffer, "%ld", 0);
+      attr.op = UNSET;
+    }
+
+    attr.value = buffer;
+
+    job->jinfo->p_planned_start = job->start_time;
+
+    pbs_alterjob(pbs_sd, (char*)jinfo -> job_id.c_str(), &attr, NULL);
+
+    return 0;
+    }
+
+  return 1;
+  }

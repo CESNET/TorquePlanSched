@@ -217,4 +217,12 @@
 #define COMMENT_UNKNOWN_LOCATION_PROPERTY_REQUEST "Not Running: Unknown location property request."
 #define COMMENT_JOB_SCHEDULED "Not Running: Job has received an allocation of nodes, waiting for running jobs to end."
 
+//plan-based scheduler configuration
+#define PARSE_DEFAULT_QUEUE "default_queue"
+#define PARSE_OPTIM_MINIMAL_QUEUED "optim_minimal_queued"
+#define PARSE_NEW_JOBS_LIMIT_PER_CYCLE "new_jobs_limit_per_cycle"
+#define PARSE_OPTIM_DURATION_LIMIT "optim_duration_limit"
+#define PARSE_OPTIM_TIMEOUT "optim_timeout"
+#define PARSE_LIMIT "limit"
+
 #endif

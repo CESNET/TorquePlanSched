@@ -169,5 +169,7 @@ int check_ignored(queue_info *qinfo);
 
 int check_dynamic_resources(server_info *sinfo, JobInfo *jinfo);
 
+int is_ok_to_run_job_new(int pbs_sd, node_info **ninfo_arr, int node_count, server_info *sinfo, queue_info *qinfo, JobInfo *jinfo, int preassign_starving);
+
 #endif
 

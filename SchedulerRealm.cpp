@@ -26,6 +26,27 @@ extern "C" {
 #include "SchedulerCore_RescInfoDb.h"
 #include "SchedulerCore_ConnectionMgr.h"
 
+/* plan-based scheduler */
+#include "plan_config.h"
+#include "plan_data_types.h"
+#include "plan_operations.h"
+#include "plan_schedule.h"
+#include "plan_first_free_slot.h"
+#include "plan_list_operations.h"
+#include "plan_free_data.h"
+#include "plan_optimization.h"
+#include "plan_log.h"
+#include "plan_jobs.h"
+#include "plan_free_data.h"
+#include "job_info.h"
+
+/* dynamic configuration */
+#include "parse.h"
+
+extern sched* new_sched;
+extern int update_qstat;
+extern time_t optimization_time;
+
 extern void dump_current_fairshare(group_info *root);
 
 World::World(int argc, char *argv[])
@@ -530,3 +551,277 @@ World::~World()
   /* Correctly free fairshare trees */
   free_fairshare_trees();
   }
+
+
+
+
+int World::try_run_plan(sched* schedule, time_t time_now)
+  {
+  int cl_number;
+  plan_job* job;
+  char *best_node_name = NULL;  /* name of best node */
+
+  JobInfo* jinfo;
+  server_info* sinfo;
+  int distinct_num_nodes;
+  int try_run_return = 0;
+
+  int booting = 0;
+  double minspec = 0;
+
+  int ret = SUCCESS;  /* return code from is_ok_to_run_job() */
+
+  for (cl_number = 0; cl_number < schedule -> num_clusters; cl_number++)
+    {
+	schedule -> jobs[cl_number] -> current = NULL;
+	while (list_get_next(schedule -> jobs[cl_number]) != NULL)
+	  {
+		job = (plan_job*) schedule -> jobs[cl_number] -> current;
+                
+                if (job->available_after > time_now)
+                    continue;
+
+		if (job -> jinfo -> state != JobRunning && job -> start_time < 0)
+		  {
+		  sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_JOB, job -> jinfo -> job_id.c_str(), "Job on bad cluster - no suitable node. Need to move to other cluster. Not implemented yet.");
+		  list_remove_item(schedule -> jobs[cl_number], job, 1);
+		  continue;
+		  }
+
+		if (job -> jinfo -> state == JobQueued && job -> start_time <= time_now && job -> start_time > 946684800)
+		  {
+		  jinfo = job -> jinfo;
+		  sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_JOB, jinfo -> job_id.c_str(), "Trying to run job.");
+
+		  if (jinfo->placement != "" and jinfo->placement[0] == '^')
+			jinfo->placement = "";
+
+		  distinct_num_nodes = job_create_nodespec(job);
+
+		  bool remote = false;
+		  int socket;
+		  if (string(jinfo->job_id).find(conf.local_server) == string::npos)
+		    {
+		    remote = true;
+		    string jobid = string(jinfo->job_id);
+		    size_t firstdot = jobid.find('.');
+		    string server_name = jobid.substr(firstdot+1);
+
+		    socket = p_connections.get_connection(server_name);
+		    }
+		  else
+		    {
+		    socket = p_connections.get_master_connection();
+		    }
+
+		  sinfo = schedule -> clusters[cl_number] -> sinfo;
+
+                  try_run_return = is_ok_to_run_job_new(socket, job -> ninfo_arr, distinct_num_nodes, sinfo, jinfo -> queue, jinfo, 0);
+                  
+                  if (try_run_return == INSUFICIENT_DYNAMIC_RESOURCE) {
+                      job -> available_after = time_now + 1800;
+		      continue;
+                  }
+                       
+		  if (try_run_return != SUCCESS)
+			  continue;
+
+		  if (remote)      {
+		      string destination = string(jinfo->queue->name)+string("@")+string(conf.local_server);
+
+		      //DIS_tcp_settimeout(p_info->job_start_timeout*2+30); /* move + run, double the tolerance */
+
+		      if (best_node_name == NULL)
+		        {
+		        best_node_name = nodes_preassign_string_new(jinfo, job -> ninfo_arr, distinct_num_nodes, booting, minspec);
+		        }
+
+		      sched_log(PBSEVENT_SCHED, PBS_EVENTCLASS_JOB, "remote best_node_name", "job: %s best_node: %s",jinfo->job_id.c_str(), best_node_name);
+		      sched_log(PBSEVENT_SCHED, PBS_EVENTCLASS_JOB, "remote ", "job: %s destination: %s",jinfo->job_id.c_str(), (char*)destination.c_str());
+
+		      ret = pbs_movejob(socket, (char*)jinfo->job_id.c_str(), (char*)destination.c_str(), best_node_name);
+		      }
+		    else
+		  {
+		  jinfo->preprocess();
+		  best_node_name = nodes_preassign_string_new(jinfo, job -> ninfo_arr, distinct_num_nodes, booting, minspec);
+		  sched_log(PBSEVENT_SCHED, PBS_EVENTCLASS_JOB, "best_node_name", "job: %s best_node: %s",jinfo->job_id.c_str(), best_node_name);
+		  ret = pbs_runjob(socket, (char*)jinfo->job_id.c_str(), best_node_name, NULL);
+		  //if (run_update_job_new(socket, job -> ninfo_arr, distinct_num_nodes, sinfo, jinfo -> queue, jinfo) != 0)
+		    //jinfo -> can_not_run = 1;
+		  }
+		  job -> sch_nodespec = NULL;
+
+		  double final_fairshare = minspec * jinfo->queue->queue_cost * jinfo->calculated_fairshare;
+		  update_job_fairshare(socket, jinfo, final_fairshare);
+
+		  if (ret == 0)
+		    {
+
+			    RescInfoDb::iterator j;
+			    for (j = resc_info_db.begin(); j != resc_info_db.end(); j++)
+			      {
+			      resource_req *resreq;
+
+			      /* skip non-dynamic resource */
+			      if (j->second.source != ResCheckDynamic)
+			        continue;
+
+			      /* no request for this resource */
+			      if ((resreq = find_resource_req(jinfo->resreq, j->second.name.c_str())) == NULL)
+			        continue;
+
+			      map<string,DynamicResource>::iterator it = sinfo->dynamic_resources.find(j->second.name);
+			      if (it != sinfo->dynamic_resources.end())
+			        {
+			        it->second.add_scheduled(resreq->amount);
+			        }
+			      }
+
+
+
+
+
+
+
+
+		    if (!booting)
+		      {
+		      sched_log(PBSEVENT_SCHED, PBS_EVENTCLASS_JOB, jinfo -> job_id.c_str(), "Job Run.");
+		      }
+		    else
+		      {
+		      sched_log(PBSEVENT_SCHED, PBS_EVENTCLASS_JOB, jinfo -> job_id.c_str(), "Job Waiting for booting node.");
+		      }
+		    }
+
+
+		  /* refresh magrathea state after run succeeded or failed */
+		  query_external_cache(sinfo,1);
+		  //job_nodes[0]=NULL;
+		  //free(job_nodes);
+		  }
+	  }
+    }
+  return 0;
+  }
+
+void World::plan_run()
+{
+const unsigned int sleep_suspend_active = 0;
+const unsigned int sleep_suspend_passive = 5;
+bool active_cycle = false;
+
+optimization_time = time(0);
+
+try {
+while (scheduler_not_dying)
+  {
+
+  //reload configuration if needed
+	//DEBUG
+	//printf("DEBUG: threshold size:%d\n", conf.limits_tresholds.size());
+  if(reinit_config(CONFIG_FILE)){
+	parse_config(CONFIG_FILE);
+	sched_log(PBSEVENT_SYSTEM, PBS_EVENTCLASS_SERVER, "", "Reloading configuration.\n");
+  }
+
+  // Suspend the scheduler for a while
+  if (active_cycle) // the cycle was active, something happened, try again fast
+    {
+    sched_log(PBSEVENT_SYSTEM, PBS_EVENTCLASS_SERVER, __PRETTY_FUNCTION__, "Suspending scheduler for %d seconds.",sleep_suspend_active);
+    sleep(sleep_suspend_active);
+    }
+  else // the cycle was passive, nothing happened, sleep for a significant while
+    {
+    sched_log(PBSEVENT_SYSTEM, PBS_EVENTCLASS_SERVER, __PRETTY_FUNCTION__, "Suspending scheduler for %d seconds.",sleep_suspend_passive);
+    sleep(sleep_suspend_passive);
+    }
+  active_cycle = false; // reset activity
+
+  sched_log(PBSEVENT_SYSTEM, PBS_EVENTCLASS_SERVER, __PRETTY_FUNCTION__, "Scheduler woken up, initializing scheduling cycle.");
+
+
+  //-------------------------------------------------------------
+  // MAIN SCHEDULING CYCLE
+  //-------------------------------------------------------------
+
+    update_cycle_status();
+
+    /* create the server / queue / job / node structures */
+    if (!fetch_servers()) { continue; }
+
+    init_scheduling_cycle();
+
+    time_t cycle_start = time(NULL);
+
+    int run_errors = 0;
+
+    JobInfo *jinfo;
+
+    JobInfo** new_jobs;
+
+    time_t time_now;
+
+    time_now = time(0);
+
+    /** inform scheduler about new world state*/
+    plan_update_clusters(new_sched,  p_info);
+    new_jobs = plan_known_jobs_update(new_sched, p_info, time_now);
+
+    /** if unkn own jobs alredy running - add the first*/
+    add_already_running_jobs(new_sched, new_jobs);
+
+    /** update all planes*/
+    for (int cl_number = 0; cl_number < new_sched -> num_clusters; cl_number++)
+      while(update_sched(p_connections.get_master_connection(), new_sched, cl_number, time_now)==2);
+    
+    /**try plan new jobs (to the suitable gaps)*/
+    try_to_schedule_new_jobs(p_connections.get_master_connection(), p_info, new_sched, new_jobs,time_now)
+
+    //log_schedule(new_sched);
+
+    /** try run jobs */
+    try_run_plan(new_sched, time_now);
+
+    /** run optimization - not every iteartion */
+    if (optimization_time + conf.optim_timeout <= time_now)
+      {
+      plan_optimization(p_connections.get_master_connection(), new_sched, time_now);
+      optimization_time = time(0);
+      update_qstat++;
+      }
+
+    /** inform user when and where the job will run */
+    if (update_qstat > 1)
+      for (int cl_number = 0; cl_number < new_sched->num_clusters; cl_number++)
+        {
+        update_planned_start(p_connections.get_master_connection(), new_sched, cl_number);
+        update_planned_nodes(p_connections.get_master_connection(), new_sched, cl_number);
+        update_qstat = 0;
+        }
+    if (update_qstat > 0)
+      update_qstat++;
+
+    if (cstat.fair_share)
+      {
+      update_last_running();
+      sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "", "Dumping fairshare\n");
+      dump_all_fairshare_remote(new_sched->clusters[0]->sinfo->name);
+      //dump_all_fairshare();
+      }
+
+    cleanup_servers();
+    //cleanup_servers_completed_jobs();
+
+    sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "", "Leaving schedule\n");
+    }
+
+  if (conf.prime_fs || conf.non_prime_fs)
+    write_usages();
+  }
+  catch (const exception& e)
+    {
+    sched_log(PBSEVENT_ERROR, PBS_EVENTCLASS_SERVER, __PRETTY_FUNCTION__, "Unexpected exception caught : %s", e.what());
+    }
+}

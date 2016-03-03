@@ -38,6 +38,8 @@ public:
   int non_dedicated_node_count;
 
   token **tokens;               /* array of tokens */
+  
+  JobInfo **scheduled_jobs; /* array of scheduled jobs*/
 
   int max_installing_nodes;
   int installing_node_count;

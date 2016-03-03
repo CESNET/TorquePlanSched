@@ -50,6 +50,12 @@ struct node_info : public NodeLogic, public JobAssign // change to protected inh
 
   MagratheaState magrathea_status;
   struct repository_alternatives ** alternatives;
+  
+  JobInfo **jobs_on_cpu; /* scheduled jobs on CPUs */
+  long int walltime_limit_min;
+  long int walltime_limit_max;
+  char *cluster_name;
+   
 
   CheckResult has_prop(const pars_prop* property, bool physical_only) const;
   bool has_prop(const char* property) const;
@@ -118,7 +124,7 @@ private:
   node_info& operator = (const node_info& src);
 
 public:
-  node_info(struct batch_status *node_data) : NodeLogic(node_data), alternatives(NULL), p_is_notusable(false), p_is_rebootable(false), p_is_building_cluster(false), p_virtual_image(), p_virtual_cluster(), p_phys_cluster(), p_excl_queue(NULL), p_host(NULL), p_hosted(), p_phys_node(NULL), p_slave_nodes(), p_waiting_on_jobs()
+  node_info(struct batch_status *node_data) : NodeLogic(node_data), alternatives(NULL), cluster_name(NULL), p_is_notusable(false), p_is_rebootable(false), p_is_building_cluster(false), p_virtual_image(), p_virtual_cluster(), p_phys_cluster(), p_excl_queue(NULL), p_host(NULL), p_hosted(), p_phys_node(NULL), p_slave_nodes(), p_waiting_on_jobs()
   {
     p_hosted.reserve(2);
   }

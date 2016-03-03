@@ -86,6 +86,8 @@
 
 #include <vector>
 
+#include "plan_data_types.h"
+
 /*
  *      query_jobs - create an array of jobs in a specified queue
  */
@@ -170,4 +172,8 @@ void free_resource_req_list(resource_req *list);
 int translate_job_fail_code(int fail_code, char *comment_msg, char *log_msg);
 
 
+/*
+ *      update_job_planned_start - update a jobs planned start time
+ */
+int update_job_planned_start(int pbs_sd, plan_job *job);
 #endif

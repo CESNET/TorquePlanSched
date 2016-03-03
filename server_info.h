@@ -169,7 +169,17 @@ token* get_token(char* tokenstring);
 
 void free_token(token* token_ptr);
 
+/*
+ * plan-based sched
+ *
+ */
+int parse_head_number(const char* job_on_cpu);
 
+const char* parse_name_job_on_cpu(const char* job_on_cpu);
 
+JobInfo* find_job_name(JobInfo **possible_jobs, char* job_name);
+ 
+int assign_jobs_on_cpu(JobInfo **jobs_on_cpu, const char* job_on_cpu, JobInfo **possible_jobs);
+int check_sched_job(JobInfo *job, void *arg);
 
 #endif

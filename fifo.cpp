@@ -107,9 +107,28 @@ extern "C" {
 #include <pbs_ifl.h>
 }
 
+
+/* plan-based scheduler */
+#include "plan_config.h"
+#include "plan_data_types.h"
+#include "plan_operations.h"
+#include "plan_schedule.h"
+#include "plan_first_free_slot.h"
+#include "plan_list_operations.h"
+#include "plan_free_data.h"
+#include "plan_optimization.h"
+#include "plan_log.h"
+#include "plan_jobs.h"
+#include "node_info.h"
+
 #include "api.hpp"
 #include <sstream>
 using namespace std;
+
+/* new scheduler */
+sched* new_sched;
+time_t optimization_time = 0;
+int update_qstat = 0;
 
 static time_t last_decay;
 time_t last_sync;
@@ -135,6 +154,10 @@ int schedinit(int UNUSED(argc), char * UNUSED(argv[]))
   parse_holidays(HOLIDAYS_FILE);
 
   time(&(cstat.current_time));
+  
+  srand( time (NULL));
+  new_sched = schedule_create();
+  optimization_time=0;
 
   if (is_prime_time())
     init_prime_time();

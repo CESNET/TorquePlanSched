@@ -101,6 +101,6 @@ int init_config();
  *      reinit_config - reinitialize the conf structure so the config file can
  *                    reparsed.
  */
-int reinit_config();
+int reinit_config(const char *config_file = NULL);
 
 #endif

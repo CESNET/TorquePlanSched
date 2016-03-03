@@ -211,3 +211,16 @@ server_locking: false
 
 # maximum number of job runs for user within a single cycle (default value = 15)
 # max_user_run: 15
+
+
+# plan-based configuration
+default_queue: default
+optim_minimal_queued: 4
+new_jobs_limit_per_cycle: 110
+optim_duration_limit: 20
+optim_timeout: 50
+thresholds: 		7200,			14400,			86400,			172800,	345600,	604800,	1209600,5356800
+limit: 		:;		7200,1.0,1.0;	14400,1.0,1.0;	86400,1.0,1.0;	172800,1.0,1.0;
+limit: 		:;		345600,1.0,1.0;	604800,1.0,1.0;	1209600,1.0,1.0;5356800,1.0,1.0
+limit: 		:300;	7200,0.6,0.8;	14400,0.55,0.7;	86400,0.5,0.6;	172800,0.5,0.6;
+limit: 		:300;	345600,0.5,0.6;	604800,0.6,0.6;	1209600,0.5,0.6;5356800,0.5,1.0

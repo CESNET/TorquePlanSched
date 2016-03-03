@@ -104,6 +104,10 @@ using namespace Core;
 #include <new>
 using namespace std;
 
+#include "plan_log.h"
+#include <iostream>
+#include <set>
+
 /*
  *
  * query_server - creates a structure of arrays consisting of a server
@@ -188,6 +192,46 @@ server_info *query_server(int pbs_sd)
   if (sinfo->num_nodes > 0)
     while (sinfo -> non_dedicated_nodes[i] != NULL) i++;
   sinfo -> non_dedicated_node_count = i;
+
+ /* plan-based scheduler */
+  int j;
+  sinfo -> scheduled_jobs =
+    job_filter(sinfo -> jobs, sinfo -> sc.total, check_sched_job, NULL);
+
+  for (i=0; i < sinfo -> num_nodes; i++)
+    {
+  	sinfo->nodes[i]->jobs_on_cpu=NULL;
+
+  	if (!sinfo -> nodes[i] -> has_jobs()) continue;
+
+  	if ((sinfo->nodes[i]->jobs_on_cpu = (JobInfo**) malloc(sinfo->nodes[i]->get_cores_total() * sizeof(JobInfo*))) == NULL)
+      {
+      free_server(sinfo, 1);
+      perror("Memory allocation error");
+      return NULL;
+      }
+
+  	for (j=0; j<sinfo->nodes[i]->get_cores_total();j++)
+  	  sinfo->nodes[i]->jobs_on_cpu[j]=NULL;
+
+  	/*
+  	std::set<std::string> jobs = sinfo -> nodes[i]->get_jobs();
+  	for (int i = 0; i < jobs.size(); i++)
+     	if (assign_jobs_on_cpu(sinfo->nodes[i]->jobs_on_cpu, jobs[i].c_str(), sinfo -> scheduled_jobs) == -1)
+  	        log_server_jobs(sinfo);*/
+
+  	std::set<std::string>::const_iterator it;
+  	std::set<std::string> jobs = sinfo -> nodes[i]->get_jobs();
+    for (it = jobs.begin(); it != jobs.end(); it++) {
+       	  if (assign_jobs_on_cpu(sinfo->nodes[i]->jobs_on_cpu, (*it).c_str(), sinfo -> scheduled_jobs) == -1)
+    	    log_server_jobs(sinfo);
+      }
+
+/*  	  j = 0;
+  	while(sinfo -> nodes[i] -> jobs[j] != NULL)
+  	  if (assign_jobs_on_cpu(sinfo->nodes[i]->jobs_on_cpu, sinfo -> nodes[i] -> jobs[j++], sinfo -> scheduled_jobs) == -1)
+  	    log_server_jobs(sinfo);*/
+    }
 
   pbs_statfree(server);
 
@@ -328,6 +372,9 @@ void free_server_info(server_info *sinfo)
 
   if (sinfo -> non_dedicated_nodes != NULL)
     free(sinfo -> non_dedicated_nodes);
+    
+  if (sinfo -> scheduled_jobs != NULL)
+    free(sinfo -> scheduled_jobs);    
 
   delete sinfo;
   }
@@ -371,6 +418,8 @@ server_info *new_server_info()
   sinfo -> tokens = NULL;
 
   sinfo -> job_start_timeout = DEFAULT_JOB_START_TIMEOUT;
+  
+  sinfo -> scheduled_jobs = NULL;
 
   return sinfo;
   }
@@ -524,3 +573,82 @@ void free_token(token* token_ptr)
     }
   }
 
+/*
+ * plan-based sched
+ *
+ *
+ */
+
+
+int check_sched_job(JobInfo *job, void * UNUSED(arg))
+  {
+  return (job -> state == JobExiting) || (job -> state == JobRunning) || (job -> state == JobCompleted);
+  }
+
+int parse_head_number(const char* job_on_cpu)
+  {
+  int cpu,i;
+  cpu=0;
+  i=0;
+  while (job_on_cpu[i] == ' ') i++;
+  while ((job_on_cpu[i] >= '0' && job_on_cpu[i] <= '9') || job_on_cpu[i] == '-' )
+    {
+	if (job_on_cpu[i] == '-')
+	    {
+		i++;
+		continue;
+	    }
+	cpu*=10;
+	cpu+=((int) job_on_cpu[i] -48);
+	i++;
+    }
+  return cpu;
+  }
+
+const char* parse_name_job_on_cpu(const char* job_on_cpu)
+  {
+  int i=0;
+
+  const char* name=job_on_cpu;
+
+  while (job_on_cpu[i] != '/') i++;
+
+  name+=i+1;
+
+  return name;
+  }
+
+
+JobInfo* find_job_name(JobInfo **possible_jobs, const char* job_name)
+  {
+  int i;
+
+  if (possible_jobs == NULL)
+    return NULL;
+
+  i=0;
+  while (possible_jobs[i]!=NULL)
+    if (strcmp (job_name,possible_jobs[i]->job_id.c_str()) == 0)
+      {
+      return possible_jobs[i];
+      } else {i++;}
+
+
+  sched_log(PBSEVENT_DEBUG, PBS_EVENTCLASS_JOB, job_name, "d'oh;running job not assigned to node; scheduling can't work properly" );
+  return NULL;
+  }
+
+int assign_jobs_on_cpu(JobInfo **jobs_on_cpu, const char* job_on_cpu, JobInfo **possible_jobs)
+  {
+  const char *job_name;
+  int cpu;
+
+  cpu=parse_head_number(job_on_cpu);
+  job_name=parse_name_job_on_cpu(job_on_cpu);
+
+  jobs_on_cpu[cpu]= find_job_name(possible_jobs, job_name);
+
+  if (jobs_on_cpu[cpu] == NULL)
+    return -1;
+  return 1;
+  }

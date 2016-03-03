@@ -278,3 +278,75 @@ usage_t calculate_usage_value(resource_req *resreq)
   return 0L;
   }
 
+void dump_all_fairshare_remote(char* fqdn)
+  {
+  map<string,FairshareTree>::iterator it = fairshare_trees.begin();
+  while (it != fairshare_trees.end())
+    {
+    it->second.dump_to_cache(fqdn);
+     ++it;
+     }
+   }
+
+ /*
+  *
+ * compare_fairshare - extract the first job from the user with the
+ *       least percentage / usage ratio
+ *
+ *   jobs - array of jobs to search through
+ *
+ * return the found job or NULL on error
+ *
+ */
+
+bool compare_fairshare(JobInfo *job_i, JobInfo *job_j)
+  {
+  float cur_value_i;
+  float cur_value_j;
+
+  if (job_i != NULL && job_j != NULL)
+    {
+
+	if (job_i->state == JobRunning && job_j->state != JobRunning)
+		return true;
+
+	if (job_i->state != JobRunning && job_j->state == JobRunning)
+		return false;
+
+	if (job_i->state == JobRunning && job_j->state == JobRunning)
+		if (atoi(job_i->job_id.c_str()) < atoi(job_j->job_id.c_str()))
+			return true;
+		else
+			return false;
+
+	if (job_i->state == JobQueued && job_j->state != JobQueued)
+		return true;
+
+	if (job_i->state != JobQueued && job_j->state == JobQueued)
+		return false;
+
+	if (job_i->state != JobQueued && job_j->state != JobQueued)
+		if (atoi(job_i->job_id.c_str()) < atoi(job_j->job_id.c_str()))
+			return true;
+		else
+			return false;
+
+	cur_value_i = job_i -> ginfo -> percentage / job_i -> ginfo -> temp_usage;
+	cur_value_j = job_j -> ginfo -> percentage / job_j -> ginfo -> temp_usage;
+
+	if (cur_value_i > cur_value_j)
+		return true;
+
+	if (job_i->job_id.c_str()[0] == ' ')
+		sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "ERROR", "job name %s - first char space!!!!!!!!!! call Simon:-)", job_i->job_id.c_str());
+
+	if (job_j->job_id.c_str()[0] == ' ')
+		sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "ERROR", "job name %s - first char space!!!!!!!!!! call Simon:-)", job_j->job_id.c_str());
+
+	if (cur_value_i == cur_value_j)
+	  if (atoi(job_i->job_id.c_str()) < atoi(job_j->job_id.c_str()))
+		  return true;
+    }
+
+  return false;
+  }

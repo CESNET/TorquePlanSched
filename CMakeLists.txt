@@ -24,7 +24,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wwrite-strings -Wformat -Wformat=2 -Wpa
 #-Wpadded -Weffc++ -Wredundant-decls
 
 set(SOURCE_FILES pbs_sched.cpp server_info.cpp ServerInfo.cpp check.cpp dedtime.cpp fairshare.cpp fifo.cpp globals.cpp job_info.cpp JobInfo.cpp JobLog.cpp misc.cpp node_info.cpp NodeInfo.cpp NodeSort.cpp nodespec.cpp parse.cpp prev_job_info.cpp prime.cpp queue_info.cpp SchedulerRealm.cpp sort.cpp utility.cpp logic/FairshareTree.cpp logic/JobAssign.cpp logic/NodeFilters.cpp logic/NodeLogic.cpp base/Resource.cpp base/ResourceSet.cpp base/PropRegistry.cpp base/NodeState.cpp base/NodeData.cpp base/MiscHelpers.cpp base/DynamicResource.cpp site_pbs_cache.cpp SchedulerCore_ConnectionMgr.cpp SchedulerCore_RescInfoDb.cpp SchedulerCore_StateCount.cpp SchedulerCore_StateCount.h)
-add_executable(torque-fast-sched ${SOURCE_FILES} legacy/site_pbs_cache_common.c)
+set(PLAN_SOURCE_FILES plan_limits.cpp plan_schedule.cpp plan_jobs.cpp plan_gaps.cpp plan_gaps_memory.cpp plan_operations.cpp plan_first_free_slot.cpp plan_list_operations.cpp plan_free_data.cpp plan_optimization.cpp plan_evaluation.cpp plan_fairshare.cpp plan_log.cpp)
+add_executable(torque-fast-sched ${SOURCE_FILES} ${PLAN_SOURCE_FILES} legacy/site_pbs_cache_common.c)
 
 TARGET_LINK_LIBRARIES(torque-fast-sched torque pbscache)
 

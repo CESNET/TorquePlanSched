@@ -347,7 +347,7 @@ void query_external_cache(server_info *sinfo, int dynamic)
     ptable=cache_hash_init();
     if ((j->second.source == ResCheckBoth) || (j->second.source == ResCheckCache))
       {
-      if (xcache_hash_fill_local(j->second.name.c_str(),ptable) == 0)
+      if (xcache_hash_fill_remote(sinfo->name, j->second.name.c_str(),ptable) == 0)
         {
         for (i=0;i<sinfo -> num_nodes;i++)
           {
@@ -372,7 +372,7 @@ void query_external_cache(server_info *sinfo, int dynamic)
     {
     /* read cluster info */
     ptable=cache_hash_init();
-    if (xcache_hash_fill_local("phys_cluster",ptable)==0)
+    if (xcache_hash_fill_remote(sinfo->name, "phys_cluster",ptable)==0)
       {
       for (i=0;i<sinfo -> num_nodes;i++)
         {
@@ -381,6 +381,8 @@ void query_external_cache(server_info *sinfo, int dynamic)
         if (value != NULL)
           {
           node->set_phys_cluster(value);
+          free(node->cluster_name);
+          node->cluster_name = value;
           }
         }
       }
@@ -393,7 +395,7 @@ void query_external_cache(server_info *sinfo, int dynamic)
 
     /* read cluster info */
     ptable=cache_hash_init();
-    if (xcache_hash_fill_local("scratch_pool",ptable)==0)
+    if (xcache_hash_fill_remote(sinfo->name, "scratch_pool",ptable)==0)
       {
       for (i=0;i<sinfo -> num_nodes;i++)
         {
@@ -416,7 +418,7 @@ void query_external_cache(server_info *sinfo, int dynamic)
 
     /* read server dynamic resources */
     ptable=cache_hash_init();
-    if (xcache_hash_fill_local("dynamic_resources",ptable)==0)
+    if (xcache_hash_fill_remote(sinfo->name, "dynamic_resources",ptable)==0)
       {
       for (j = resc_info_db.begin(); j != resc_info_db.end(); j++)
         {
@@ -440,7 +442,7 @@ void query_external_cache(server_info *sinfo, int dynamic)
 
     /* read scratch local dead data usage */
     ptable=cache_hash_init();
-    if (xcache_hash_fill_local("scratch_local",ptable)==0)
+    if (xcache_hash_fill_remote(sinfo->name, "scratch_local",ptable)==0)
       {
       for (i=0;i<sinfo -> num_nodes;i++)
         {
@@ -469,7 +471,7 @@ void query_external_cache(server_info *sinfo, int dynamic)
 
     /* read scratch ssd dead data usage */
     ptable=cache_hash_init();
-    if (xcache_hash_fill_local("scratch_ssd",ptable)==0)
+    if (xcache_hash_fill_remote(sinfo->name, "scratch_ssd",ptable)==0)
       {
       for (i=0;i<sinfo -> num_nodes;i++)
         {
@@ -498,7 +500,7 @@ void query_external_cache(server_info *sinfo, int dynamic)
 
     /* read scratch priority */
     ptable=cache_hash_init();
-    if (xcache_hash_fill_local("scratch_priority",ptable)==0)
+    if (xcache_hash_fill_remote(sinfo->name, "scratch_priority",ptable)==0)
       {
       for (i=0;i<sinfo -> num_nodes;i++)
         {

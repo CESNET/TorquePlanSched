@@ -493,3 +493,41 @@ char* nodes_preassign_string(JobInfo *jinfo, node_info **ninfo_arr, int count, i
 
   return strdup(s.str().c_str());
   }
+
+/** Get the target string from preassigned nodes - plan-based scheduler
+ *
+ * @param ninfo_arr List of nodes to parse
+ * @return Allocated string containing the targets
+ */
+char* nodes_preassign_string_new(JobInfo *jinfo, node_info **ninfo_arr, int count, int &booting, double &minspec)
+  {
+  stringstream s;
+  bool first = true;
+  int i;
+
+  assert(ninfo_arr != NULL);
+
+  for (i = 0; i < count && ninfo_arr[i] != NULL; i++)
+    {
+    if (ninfo_arr[i]->has_assignment() && ninfo_arr[i]->magrathea_status == MagratheaStateBooting)
+      {
+      booting = 1;
+      return NULL;
+      }
+    }
+
+  for (i = 0; i < count && ninfo_arr[i] != NULL; i++)
+    {
+    if (ninfo_arr[i]->has_assignment())
+      {
+      if (!first) s << "+";
+      first = false;
+      get_target_full(s,jinfo,ninfo_arr[i], false);
+      }
+    }
+
+  if (jinfo->is_exclusive())
+    s << "#excl";
+
+  return strdup(s.str().c_str());
+  }

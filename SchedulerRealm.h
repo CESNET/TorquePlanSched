@@ -8,6 +8,9 @@
 #include "data_types.h"
 #include "SchedulerCore_ConnectionMgr.h"
 
+/* plan-based scheduler */
+#include "plan_data_types.h"
+
 class World
   {
   public:
@@ -17,7 +20,9 @@ class World
     ~World();
 
     void run();
-
+    
+    /** run() replacing*/
+    void plan_run();
 
   private:
     bool fetch_servers();
@@ -26,6 +31,9 @@ class World
     void init_scheduling_cycle();
     void update_last_running();
     int try_run_job(JobInfo *jinfo);
+    
+    /** try_run_job() replacing*/
+    int try_run_plan(sched* schedule, time_t time_now);
 
     Scheduler::Core::ConnectionMgr p_connections;
 

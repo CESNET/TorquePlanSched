@@ -54,6 +54,7 @@ class FairshareTree
     group_info *find_ginfo(const std::string& name) const;  ///< Find a specific faishare group inside this tree
 
     void dump_to_cache() const;   ///< Dump information from this fairshare tree to pbs_cache
+    void dump_to_cache(char* fqdn) const;   ///< Dump information from this fairshare tree to pbs_cache
     void dump_to_file() const;    ///< Dump information from this fairshare to a file (usage.name)
     void dump_to_ini() const;
     
@@ -68,6 +69,7 @@ class FairshareTree
     group_info* find_ginfo(const char *name, group_info *root) const; ///< Recursive find
     void add_unknown(group_info *ginfo);  ///< Add this group into unknown
     void dump_to_cache(const std::string& metric, group_info *ginfo) const; ///< Recursive store to cache
+    void dump_to_cache(char* fqdn, const std::string& metric, group_info *ginfo) const; ///< Recursive store to cache   
     void dump_to_file(group_info *root, FILE *fp) const;  ///< Recursive store to file
     void dump_to_ini(group_info *root, FILE *fp) const;
 

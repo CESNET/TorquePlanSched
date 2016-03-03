@@ -223,6 +223,8 @@ unsigned is_admin_queue : 1; /* admin job queue */
   node_info **excl_nodes;
 
   char *fairshare_tree;
+  
+  char *required_property;
 
   double queue_cost;
 
@@ -386,6 +388,17 @@ unsigned priority_fairshare :
   int max_user_run;
 
   time_t max_cycle; /* maximum cycle length */
+  
+  /* plan-based scheduler configuration */
+  char default_queue[PBS_MAXQUEUENAME +1];
+  time_t config_loaded;/* when was this configuration loaded*/
+  int optim_minimal_queued;
+  int new_jobs_limit_per_cycle;
+  int optim_duration_limit;
+  int optim_timeout;
+
+  //std::vector<int> *limits_tresholds;
+  std::map< std::string, std::map< long, struct cluster_limits_arrays> > *limits_for_clusters;  
   };
 
 /* for description of these bits, check the PBS admin guide or scheduler IDS */
@@ -433,4 +446,10 @@ unsigned is_ded_time:
 
   };
 
+struct cluster_limits_arrays
+  {
+	std::vector<float> percentages;
+	std::vector<float> percentages_global;
+	std::vector<long> tresholds;
+  };
 #endif

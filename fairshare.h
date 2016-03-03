@@ -140,4 +140,7 @@ void dump_all_fairshare();
 
 Scheduler::Logic::FairshareTree& get_tree(const std::string& tree);
 
+bool compare_fairshare(JobInfo *job_i, JobInfo *job_j);
+void dump_all_fairshare_remote(char* fqdn);
+
 #endif

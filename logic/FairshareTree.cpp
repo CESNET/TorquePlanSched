@@ -274,11 +274,34 @@ void FairshareTree::dump_to_cache(const string& metric, group_info *ginfo) const
   this->dump_to_cache(metric,ginfo->child);
   }
 
+void FairshareTree::dump_to_cache(char* fqdn, const string& metric, group_info *ginfo) const
+  {
+  if (ginfo == NULL)
+    return;
+
+  if (ginfo->child == NULL) /* found a leaf */
+    {
+    double prio = ginfo->percentage / ginfo->usage;
+    ostringstream s;
+    s << prio;
+    xcache_store_remote(fqdn, ginfo->name,metric.c_str(),s.str().c_str());
+    }
+
+  this->dump_to_cache(fqdn, metric,ginfo->sibling);
+  this->dump_to_cache(fqdn, metric,ginfo->child);
+  }
+
 void FairshareTree::dump_to_cache() const
   {
   string metric_name = string("fairshare.")+this->p_name;
   this->dump_to_cache(metric_name,this->p_tree);
   }
+
+void FairshareTree::dump_to_cache(char* fqdn) const
+   {
+   string metric_name = string("fairshare.")+this->p_name;
+   this->dump_to_cache(fqdn, metric_name,this->p_tree);
+   }
 
 void FairshareTree::read_configuration()
   {

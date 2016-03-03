@@ -98,6 +98,54 @@ using namespace Core;
 
 #include "sort.h"
 
+/* plan-based scheduler */
+#include "plan_config.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+struct stat fstatus;
+
+int parse_limit(char* parsed_value){
+  //printf("DEBUG: parsing limits.");
+  char *cluster=parsed_value;
+  char *delim_pos=strchr(parsed_value,':');
+
+  if(0 == *delim_pos){
+	  return 1;
+  }
+  *delim_pos=0;
+
+  int num_cpus = strtol(delim_pos+1, &delim_pos, 10);
+  if(';' != *delim_pos){
+	  return 1;
+  }
+  struct cluster_limits_arrays &limit_struct = (*conf.limits_for_clusters)[cluster][num_cpus];
+
+  while((';' == (*delim_pos)) && (0 != *(delim_pos+1)))
+    {
+      long threshold = strtol(delim_pos+1, &delim_pos, 10);
+      if((0 == *delim_pos)||(0 == *(delim_pos+1))){
+	  return 1;
+      }
+      //printf(" %d;",threshold);
+      limit_struct.tresholds.push_back(threshold);
+
+      float limit  = strtof(delim_pos+1, &delim_pos);
+      if((0 == *delim_pos)||(0 == *(delim_pos+1))){
+	  return 1;
+      }
+      //printf(" %f,",limit);
+      limit_struct.percentages.push_back(limit);
+
+      limit  = strtof(delim_pos+1, &delim_pos);
+      //printf(" %f,",limit);
+      limit_struct.percentages_global.push_back(limit);
+
+    }
+  //printf(" - OK\n");
+  return 0;
+}
+
+
 /*
  *
  * parse_config - parse the config file and set a struct config
@@ -116,6 +164,7 @@ int parse_config(const char *fname)
   {
   FILE *fp;   /* file pointer to config file */
   char buf[256];  /* used to read in lines from the file */
+  char buf_copy[256]; /*used to store copy of buf for parsing limit arrays*/
   char *config_name;  /* parse first word of line */
   char *config_value;  /* parsed second word - right after colen (:) */
   char *prime_value;  /* optional third word */
@@ -135,6 +184,11 @@ int parse_config(const char *fname)
     return 0;
     }
 
+  //store time of last modification for meta scheduler (if able)
+  if(!stat(fname,&fstatus)){
+     conf.config_loaded = fstatus.st_mtime;
+   }  
+
   while (fgets(buf, 256, fp) != NULL)
     {
     linenum++;
@@ -147,6 +201,8 @@ int parse_config(const char *fname)
       {
       if (buf[strlen(buf)-1] == '\n')
         buf[strlen(buf)-1] = '\0';
+        
+      strcpy(buf_copy,buf);
 
       config_name = strtok(buf, ": \t");
 
@@ -367,10 +423,29 @@ int parse_config(const char *fname)
               }
             }
           }
+        else if (!strcmp(config_name,PARSE_DEFAULT_QUEUE))
+          {
+          if (strlen(config_value) > PBS_MAXQUEUENAME)
+            error = 1;
+          else
+            strcpy(conf.default_queue,config_value);
+          }            
         else if (!strcmp(config_name,PARSE_JOB_MOVING))
           conf.move_jobs = num ? 1 : 0;
         else if (!strcmp(config_name,PARSE_FAIR_SHARE_PRIORITY))
           conf.priority_fairshare = num ? 1 : 0;
+        //meta scheduler configuration
+        else if (!strcmp(config_name,PARSE_OPTIM_MINIMAL_QUEUED))
+          conf.optim_minimal_queued = num;
+        else if (!strcmp(config_name,PARSE_NEW_JOBS_LIMIT_PER_CYCLE))
+          conf.new_jobs_limit_per_cycle = num;
+        else if (!strcmp(config_name,PARSE_OPTIM_DURATION_LIMIT))
+          conf.optim_duration_limit = num;
+        else if (!strcmp(config_name,PARSE_OPTIM_TIMEOUT))
+          conf.optim_timeout = num;
+        else if (!strcmp(config_name,PARSE_LIMIT)){
+            error = parse_limit(buf_copy+(config_value-buf));//skipping anything till config_value in buf_copy
+          }          
         }
       else
         error = 1;
@@ -388,6 +463,8 @@ int parse_config(const char *fname)
 /*
  *
  *      init_config - initalize the config struture
+ *
+ *      fname - file name of the config file, reinitialize only if the file is newer than current configuration
  *
  *      returns success / failure
  *
@@ -449,6 +526,11 @@ init_config(void)
 
   conf.max_user_run = 15;
 
+  strcpy(conf.default_queue, "default");  
+  conf.limits_for_clusters = new std::map< std::string, std::map< long, struct cluster_limits_arrays> >();
+  //create default cluster
+  (*conf.limits_for_clusters)[""];
+
   return 1;
   }
 
@@ -461,9 +543,19 @@ init_config(void)
  *
  */
 int
-reinit_config(void)
+reinit_config(const char *fname)
   {
   int i;
+  if(fname){
+	if(stat(fname,&fstatus)){
+	  	return 0;
+	}
+	if(fstatus.st_mtime<=conf.config_loaded){
+		return 0;
+	}
+  }
+
+  delete conf.limits_for_clusters;  
   free(conf.prime_sort);
   free(conf.non_prime_sort);
   free_fairshare_trees();

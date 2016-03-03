@@ -32,6 +32,8 @@ class NodeData : public Internals::NodeState
 
       bool has_virt_prop(const char *name) const;
       bool has_phys_prop(const char *name) const;
+      
+      std::set<std::string> get_phys_prop() const {return p_phys_props;}
 
       long get_priority() const { return p_priority; }
       node_type get_type() const { return p_type; }

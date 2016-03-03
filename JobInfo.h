@@ -50,6 +50,8 @@ struct JobInfo
   std::string p_planned_nodes;
   /* Planned start, for this job */
   time_t p_planned_start;
+  /* Planned completion time, for this job */  
+  time_t compl_time;
   /* Jobs that are before this job */
   std::string p_waiting_for;
   /* the fair share node for the owner */
