@@ -257,12 +257,12 @@ server_info *query_server(int pbs_sd)
         }
       }
     }
-
+/*
   for (i = 0; i < sinfo->num_nodes && sinfo->nodes[i] != NULL; i++)
     {
     sinfo->nodes[i]->expand_virtual_nodes();
     }
-
+*/
   return sinfo;
   }
 

@@ -777,7 +777,7 @@ while (scheduler_not_dying)
       while(update_sched(p_connections.get_master_connection(), new_sched, cl_number, time_now)==2);
     
     /**try plan new jobs (to the suitable gaps)*/
-    try_to_schedule_new_jobs(p_connections.get_master_connection(), p_info, new_sched, new_jobs,time_now)
+    try_to_schedule_new_jobs(p_connections.get_master_connection(), p_info, new_sched, new_jobs,time_now);
 
     //log_schedule(new_sched);
 

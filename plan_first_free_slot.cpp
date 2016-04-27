@@ -93,7 +93,7 @@ int first_free_slots_initialize(plan_cluster* cluster_k, first_free_slot **first
 
   for (int i = 0; i < cluster_k -> num_nodes; i++)
     {
-	if (cluster_k -> nodes[i] ->is_down() ||  cluster_k -> nodes[i] ->is_offline() || cluster_k -> nodes[i] ->is_notusable())
+	if (cluster_k -> nodes[i] ->is_down() ||  cluster_k -> nodes[i] ->is_offline() || cluster_k -> nodes[i] ->is_notusable() || cluster_k -> nodes[i] ->is_unknown() || cluster_k -> nodes[i] ->is_reserved() || cluster_k -> nodes[i] ->is_busy())
       {
 	  for (int j = 0; j < cluster_k -> nodes[i] -> get_cores_total(); j++)
 	    {
