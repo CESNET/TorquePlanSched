@@ -39,12 +39,12 @@ int adjust_mem_gap_position(plan_gap_mem** nodes_memory, int num_nodes,int posit
 /*
  * create memory structure
  */
-plan_gap_mem** gap_memory_create(plan_gap* gap, plan_job* job, int num_first_free_slot, first_free_slot **first_free_slots);
+plan_gap_mem** gap_memory_create(plan_gap* gap, plan_job* job, first_free_slot **first_free_slots);
 
 /*
  * create memory structure
  */
-plan_gap_mem** gap_memory_create_last(plan_gap* gap, plan_job* job, int num_first_free_slot, first_free_slot **first_free_slots);
+plan_gap_mem** gap_memory_create_last(plan_gap* gap, int num_first_free_slot, first_free_slot **first_free_slots);
 
 /*
  * add new memory record to the gap

@@ -137,8 +137,6 @@ int free_first_free_slots(first_free_slot** first_free_slots, plan_cluster* clus
 
 void free_jobs_completed_jobs(JobInfo **jarr)
   {
-  int i;
-
   if (jarr == NULL)
     return;
 
@@ -159,7 +157,7 @@ void free_queues_completed_jobs(queue_info **qarr, char free_jobs_too)
   for (i = 0; qarr[i] != NULL; i++)
     {
     if (free_jobs_too)
-      free_jobs_completed_jobs(qarr[i] -> jobs);
+      qarr[i] -> jobs.clear();
 
     free_queue_info(qarr[i]);
     }

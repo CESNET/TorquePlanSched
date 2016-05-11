@@ -408,9 +408,7 @@ int cluster_check_fit(plan_cluster* cl, node_info* ninfo)
 
 int check_cluster_suitable(server_info* p_info, plan_cluster* cl, plan_job* job)
   {
-  int num_node_properties = 0;
   int req_num_nodes;
-  char **job_properties;
 
   bool isbackfill = false;
   
@@ -445,7 +443,7 @@ int check_cluster_suitable(server_info* p_info, plan_cluster* cl, plan_job* job)
     node_spec = "1:ppn=1";
     }
 
-  /* re-parse the nodespec */
+  /* re-parse nodespec */
   pars_spec *spec;
   if ((spec = parse_nodespec(node_spec)) == NULL)
     return SCHD_ERROR;
@@ -658,7 +656,6 @@ int plan_update_clusters(sched* schedule,  server_info* sinfo)
 sch_resource_t job_get_scratch_local(JobInfo *jinfo)
   {
   unsigned long long scratch = 0;
-  enum ScratchType scratch_type = ScratchNone;
   /* read the nodespec, has to be sent from server */
   const char *node_spec = strdup(jinfo->nodespec.c_str());
   if ( node_spec == NULL || node_spec[0] == '\0')
@@ -691,12 +688,9 @@ JobInfo** plan_known_jobs_update(sched* schedule,  server_info* sinfo, time_t ti
   JobInfo** new_jobs;
   JobInfo* jinfo;
   plan_job* job;
-  plan_cluster* cluster;
   resource_req *res_walltime = NULL;
 
-  JobInfo** tmp_count_jobs;
-
-  if (sinfo -> jobs == NULL)
+  if (sinfo -> jobs.empty())
     return NULL;
 
   found = 0;
@@ -704,21 +698,15 @@ JobInfo** plan_known_jobs_update(sched* schedule,  server_info* sinfo, time_t ti
   job_count = 0;
   new_jobs_counter = 0;
 
-  tmp_count_jobs = sinfo->jobs;
-
-  while (*(tmp_count_jobs)!=NULL){
-	  tmp_count_jobs++;
-	  job_count++;
-  }
+  job_count = sinfo->jobs.size();
 
   sort(&(sinfo->jobs[0]), &(sinfo->jobs[job_count-1])+1, compare_fairshare);
 
-  job_count = 0;
-
-  while (*(sinfo -> jobs)!=NULL)
+  job_count = 0;  
+  for (std::vector<JobInfo*>::iterator it = sinfo -> jobs.begin(); it != sinfo -> jobs.end(); it++)
     {
     found = 0;
-    jinfo = *(sinfo -> jobs);
+    jinfo = *it;
     job_id = parse_head_number(jinfo -> job_id.c_str());
 
     for (int i = 0; i < schedule -> num_clusters; i++)
@@ -733,7 +721,7 @@ JobInfo** plan_known_jobs_update(sched* schedule,  server_info* sinfo, time_t ti
 
           //free_job_info(job -> jinfo);
 
-          jinfo->preprocess();
+          //jinfo->preprocess();
 
           job -> jinfo = jinfo;
 
@@ -788,7 +776,7 @@ JobInfo** plan_known_jobs_update(sched* schedule,  server_info* sinfo, time_t ti
       if (jinfo ->state == JobQueued)
          sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "new_queued_job", "%s %s", jinfo -> job_id.c_str(), jinfo ->account.c_str());
 
-      jinfo->preprocess();
+      //jinfo->preprocess();
 
       if ((new_jobs = (JobInfo**) realloc(new_jobs, (new_jobs_counter + 1) * sizeof(JobInfo*))) == NULL)
         {
@@ -800,11 +788,8 @@ JobInfo** plan_known_jobs_update(sched* schedule,  server_info* sinfo, time_t ti
       new_jobs[new_jobs_counter] = NULL;
       }
 
-  	(sinfo -> jobs)++;
   	job_count++;
     }
-
-  (sinfo -> jobs) -= job_count;
 
   sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "New jobs", " count: %d", new_jobs_counter);
 

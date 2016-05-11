@@ -238,12 +238,11 @@ int try_to_schedule_new_jobs(int pbs_sd, server_info *p_info, sched* schedule, J
   int counter = 0;
   int not_scheduled = 0;
   int cl_min = 0;
-  bool found = 0;
   char buffer_time[30];
   
   struct timeval tv_start;
   struct timeval tv_step1;
-  struct timeval tv_step2;
+  //struct timeval tv_step2;
   long long step_time;
   long long total_time;
 
@@ -291,7 +290,7 @@ int try_to_schedule_new_jobs(int pbs_sd, server_info *p_info, sched* schedule, J
 
 		found_gap = find_first_gap(schedule, cl_number ,new_job, false);
 
-	  	if (found_gap != NULL)
+	  	if (found_gap != NULL) {
 	  	  if (found_earliest_gap == NULL)
 	  	  {
 	  	  found_earliest_gap = found_gap;
@@ -299,13 +298,12 @@ int try_to_schedule_new_jobs(int pbs_sd, server_info *p_info, sched* schedule, J
 	  	  cl_min = cl_number;
 	  	  } else
 	  	  {
-	  	    if (found_gap -> start_time < found_earliest_gap -> start_time )
-	  	      {
+	  	    if (found_gap -> start_time < found_earliest_gap -> start_time ) {
 	  	      found_earliest_gap = found_gap;
-
 	  	      cl_min = cl_number;
 	  	      }
 	  	  }
+                }
 
 	  	cl_number++;
 	    }
@@ -344,8 +342,8 @@ int try_to_schedule_new_jobs(int pbs_sd, server_info *p_info, sched* schedule, J
 
 		job_put_in_gap(schedule,cl_number,new_job,found_gap);
 
-		if (update_sched(pbs_sd,schedule, cl_number, time_now) == 2)
-                    update_sched(pbs_sd,schedule, cl_number, time_now);
+		if (update_sched(schedule, cl_number, time_now) == 2)
+                    update_sched(schedule, cl_number, time_now);
                 
                 gettimeofday(&tv_step1, NULL);
                 step_time = (tv_step1.tv_sec * 1e6 + tv_step1.tv_usec) - (tv_start.tv_sec * 1e6 + tv_start.tv_usec);
@@ -374,7 +372,7 @@ int try_to_schedule_new_jobs(int pbs_sd, server_info *p_info, sched* schedule, J
 
 void remove_substring(char *s,const char *toremove)
 {
-  while( s=strstr(s,toremove) )
+  while( (s = strstr(s,toremove)) )
     memmove(s,s+strlen(toremove),1+strlen(s+strlen(toremove)));
 }
 

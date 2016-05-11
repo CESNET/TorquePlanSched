@@ -615,8 +615,10 @@ int World::try_run_plan(sched* schedule, time_t time_now)
 		    }
 
 		  sinfo = schedule -> clusters[cl_number] -> sinfo;
+                  
+                  jinfo->clean_parsed_nodespec();
 
-                  try_run_return = is_ok_to_run_job_new(socket, job -> ninfo_arr, distinct_num_nodes, sinfo, jinfo -> queue, jinfo, 0);
+                  try_run_return = is_ok_to_run_job_new(job -> ninfo_arr, distinct_num_nodes, sinfo, jinfo -> queue, jinfo, 0);
                   
                   if (try_run_return == INSUFICIENT_DYNAMIC_RESOURCE) {
                       job -> available_after = time_now + 1800;
@@ -633,7 +635,7 @@ int World::try_run_plan(sched* schedule, time_t time_now)
 
 		      if (best_node_name == NULL)
 		        {
-		        best_node_name = nodes_preassign_string_new(jinfo, job -> ninfo_arr, distinct_num_nodes, booting, minspec);
+		        best_node_name = nodes_preassign_string_new(jinfo, job -> ninfo_arr, distinct_num_nodes, booting);
 		        }
 
 		      sched_log(PBSEVENT_SCHED, PBS_EVENTCLASS_JOB, "remote best_node_name", "job: %s best_node: %s",jinfo->job_id.c_str(), best_node_name);
@@ -643,8 +645,8 @@ int World::try_run_plan(sched* schedule, time_t time_now)
 		      }
 		    else
 		  {
-		  jinfo->preprocess();
-		  best_node_name = nodes_preassign_string_new(jinfo, job -> ninfo_arr, distinct_num_nodes, booting, minspec);
+		  //jinfo->preprocess();
+		  best_node_name = nodes_preassign_string_new(jinfo, job -> ninfo_arr, distinct_num_nodes, booting);
 		  sched_log(PBSEVENT_SCHED, PBS_EVENTCLASS_JOB, "best_node_name", "job: %s best_node: %s",jinfo->job_id.c_str(), best_node_name);
 		  ret = pbs_runjob(socket, (char*)jinfo->job_id.c_str(), best_node_name, NULL);
 		  //if (run_update_job_new(socket, job -> ninfo_arr, distinct_num_nodes, sinfo, jinfo -> queue, jinfo) != 0)
@@ -753,11 +755,7 @@ while (scheduler_not_dying)
 
     init_scheduling_cycle();
 
-    time_t cycle_start = time(NULL);
-
-    int run_errors = 0;
-
-    JobInfo *jinfo;
+    //time_t cycle_start = time(NULL);
 
     JobInfo** new_jobs;
 
@@ -774,7 +772,7 @@ while (scheduler_not_dying)
 
     /** update all planes*/
     for (int cl_number = 0; cl_number < new_sched -> num_clusters; cl_number++)
-      while(update_sched(p_connections.get_master_connection(), new_sched, cl_number, time_now)==2);
+      while(update_sched(new_sched, cl_number, time_now)==2);
     
     /**try plan new jobs (to the suitable gaps)*/
     try_to_schedule_new_jobs(p_connections.get_master_connection(), p_info, new_sched, new_jobs,time_now);
@@ -787,7 +785,7 @@ while (scheduler_not_dying)
     /** run optimization - not every iteartion */
     if (optimization_time + conf.optim_timeout <= time_now)
       {
-      plan_optimization(p_connections.get_master_connection(), new_sched, time_now);
+      plan_optimization(new_sched, time_now);
       optimization_time = time(0);
       update_qstat++;
       }

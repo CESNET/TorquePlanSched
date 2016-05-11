@@ -38,56 +38,7 @@ sch_resource_t get_node_scratch_local(node_info *ninfo)
   return scratch_local -> get_capacity();
   }
 
-int adjust_mem_gap_position(plan_gap_mem** nodes_memory, int num_nodes,int position_to_adjust)
-  {
-  plan_gap_mem* tmp_gap_mem;
-#ifdef MEM_GAP_ASC
-#undef MEM_GAP_DEC
-  /*
-   * asc
-   */
-  while (position_to_adjust > 0 && nodes_memory[position_to_adjust] -> num_cpus < nodes_memory[position_to_adjust - 1] -> num_cpus)
-    {
-    tmp_gap_mem = nodes_memory[position_to_adjust - 1];
-    nodes_memory[position_to_adjust - 1] = nodes_memory[position_to_adjust];
-    nodes_memory[position_to_adjust] = tmp_gap_mem;
-    position_to_adjust--;
-    }
-
-  while (position_to_adjust < num_nodes - 1 && nodes_memory[position_to_adjust] -> num_cpus > nodes_memory[position_to_adjust + 1] -> num_cpus)
-    {
-    tmp_gap_mem = nodes_memory[position_to_adjust + 1];
-    nodes_memory[position_to_adjust + 1] = nodes_memory[position_to_adjust];
-    nodes_memory[position_to_adjust] = tmp_gap_mem;
-    position_to_adjust++;
-    }
-#endif
-
-#ifdef MEM_GAP_DEC
-#undef MEM_GAP_ASC
-  /*
-   * dec
-   */
-  while (position_to_adjust > 0 && nodes_memory[position_to_adjust] -> num_cpus > nodes_memory[position_to_adjust - 1] -> num_cpus)
-    {
-    tmp_gap_mem = nodes_memory[position_to_adjust - 1];
-    nodes_memory[position_to_adjust - 1] = nodes_memory[position_to_adjust];
-    nodes_memory[position_to_adjust] = tmp_gap_mem;
-    position_to_adjust--;
-    }
-
-  while (position_to_adjust < num_nodes - 1 && nodes_memory[position_to_adjust] -> num_cpus < nodes_memory[position_to_adjust + 1] -> num_cpus)
-    {
-    tmp_gap_mem = nodes_memory[position_to_adjust + 1];
-    nodes_memory[position_to_adjust + 1] = nodes_memory[position_to_adjust];
-    nodes_memory[position_to_adjust] = tmp_gap_mem;
-    position_to_adjust++;
-    }
-#endif
-  return 0;
-  }
-
-plan_gap_mem** gap_memory_create(plan_gap* gap, plan_job* job, int num_first_free_slot, first_free_slot **first_free_slots)
+plan_gap_mem** gap_memory_create(plan_gap* gap, plan_job* job, first_free_slot **first_free_slots)
   {
   int i;
   plan_gap_mem** new_gap_mem;
@@ -99,7 +50,7 @@ plan_gap_mem** gap_memory_create(plan_gap* gap, plan_job* job, int num_first_fre
   gap -> usage = 0;
 
   for (int j = 0; j < job -> usage; j++)
-	if (job -> cpu_indexes[j] >= 0)
+     if (job -> cpu_indexes[j] >= 0)
 	if (first_free_slots[job -> cpu_indexes[j]] -> time < gap -> end_time)
 	  {
 	  gap -> usage++;
@@ -131,14 +82,12 @@ plan_gap_mem** gap_memory_create(plan_gap* gap, plan_job* job, int num_first_fre
 
     	num_nodes++;
 
-    	adjust_mem_gap_position(new_gap_mem, num_nodes,num_nodes-1);
         } else
         {
         new_gap_mem[known_node] -> available_mem=first_free_slots[i] -> available_mem;
         new_gap_mem[known_node] -> available_scratch_local=first_free_slots[i] -> available_scratch_local;
         new_gap_mem[known_node] -> num_cpus += 1;
 
-        adjust_mem_gap_position(new_gap_mem, num_nodes,known_node);
         }
       }
 
@@ -147,17 +96,15 @@ plan_gap_mem** gap_memory_create(plan_gap* gap, plan_job* job, int num_first_fre
   return new_gap_mem;
   }
 
-plan_gap_mem** gap_memory_create_last(plan_gap* gap, plan_job* job, int num_first_free_slot, first_free_slot **first_free_slots)
+plan_gap_mem** gap_memory_create_last(plan_gap* gap, int num_first_free_slot, first_free_slot **first_free_slots)
   {
   plan_gap_mem** new_gap_mem;
   int num_nodes = 0;
-  int latest_cpu_index;
   int known_node = -1;
 
   new_gap_mem = NULL;
 
   gap -> usage = 0;
-  latest_cpu_index = -1;
 
   for (int i = 0; i < num_first_free_slot; i++)
     if (first_free_slots[i] -> time < gap -> end_time)
@@ -194,14 +141,12 @@ plan_gap_mem** gap_memory_create_last(plan_gap* gap, plan_job* job, int num_firs
 
     	num_nodes++;
 
-    	adjust_mem_gap_position(new_gap_mem, num_nodes,num_nodes-1);
         } else
         {
         new_gap_mem[known_node] -> available_mem = first_free_slots[i] -> available_mem;
         new_gap_mem[known_node] -> available_scratch_local = first_free_slots[i] -> available_scratch_local;
         new_gap_mem[known_node] -> num_cpus += 1;
 
-        adjust_mem_gap_position(new_gap_mem, num_nodes,known_node);
         }
       }
 
@@ -225,7 +170,6 @@ void* add_mem_gap_to_gap(plan_gap *gap_target, plan_gap *gap_source)
 	  {
 	  gap_target -> nodes_memory[j] -> num_cpus += gap_source -> nodes_memory[i] -> num_cpus;
 
-	  adjust_mem_gap_position(gap_target -> nodes_memory, gap_target -> num_nodes, j);
 	  } else
 	  {
 	  gap_target -> num_nodes=++j;
@@ -247,7 +191,6 @@ void* add_mem_gap_to_gap(plan_gap *gap_target, plan_gap *gap_source)
 	  gap_target -> nodes_memory[j - 1] -> available_scratch_local = gap_source -> nodes_memory[i] -> available_scratch_local;
 	  gap_target -> nodes_memory[j - 1] -> num_cpus = gap_source -> nodes_memory[i] -> num_cpus;
 
-	  adjust_mem_gap_position(gap_target -> nodes_memory, gap_target -> num_nodes, j-1);
 	  }
     }
 
@@ -257,7 +200,6 @@ void* add_mem_gap_to_gap(plan_gap *gap_target, plan_gap *gap_source)
 void adjust_gap_memory(plan_gap *gap_new,plan_gap *last_gap)
   {
   plan_job* neighbour_job;
-  int j;
   if (last_gap -> following_job==NULL)
     return;
 

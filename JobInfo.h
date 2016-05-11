@@ -105,6 +105,7 @@ struct JobInfo
 
   
   pars_spec *parsed_nodespec() const;
+  void clean_parsed_nodespec();
 
   private:
     mutable pars_spec *p_parsed_nodespec;

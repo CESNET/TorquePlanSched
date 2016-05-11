@@ -31,7 +31,7 @@ void print_resource_val(resource_req* res)
   {
   if (res != NULL)
     {
-	fprintf(stderr, "%s %ld\n", res -> name, res -> amount );
+	fprintf(stderr, "%s %lld\n", res -> name, res -> amount );
 	print_resource_val(res -> next);
     }
   }
@@ -257,7 +257,6 @@ void log_print_ffnot(int first_free_slot_not[], int num_cpus)
 void log_server_jobs(server_info *sinfo)
   {
   int i;
-  int counter;
 
   sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "job on node not found", "job not in sinfo -> scheduled_job");
 

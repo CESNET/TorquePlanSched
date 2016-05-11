@@ -194,10 +194,14 @@ server_info *query_server(int pbs_sd)
   sinfo -> non_dedicated_node_count = i;
 
  /* plan-based scheduler */
-  int j;
-  sinfo -> scheduled_jobs =
-    job_filter(sinfo -> jobs, sinfo -> sc.total, check_sched_job, NULL);
+  
+  sinfo->scheduled_jobs.clear();
+  sinfo->scheduled_jobs.reserve(sinfo->jobs.size()/2);
+  copy_if(begin(sinfo->jobs), end(sinfo->jobs), back_inserter(sinfo->scheduled_jobs),
+          [](JobInfo* j) { return (j -> state == JobExiting) || (j -> state == JobRunning) || (j -> state == JobCompleted); });
 
+          
+  int j;
   for (i=0; i < sinfo -> num_nodes; i++)
     {
   	sinfo->nodes[i]->jobs_on_cpu=NULL;
@@ -373,8 +377,7 @@ void free_server_info(server_info *sinfo)
   if (sinfo -> non_dedicated_nodes != NULL)
     free(sinfo -> non_dedicated_nodes);
     
-  if (sinfo -> scheduled_jobs != NULL)
-    free(sinfo -> scheduled_jobs);    
+  sinfo -> scheduled_jobs.clear();    
 
   delete sinfo;
   }
@@ -419,7 +422,7 @@ server_info *new_server_info()
 
   sinfo -> job_start_timeout = DEFAULT_JOB_START_TIMEOUT;
   
-  sinfo -> scheduled_jobs = NULL;
+  sinfo -> scheduled_jobs.clear();
 
   return sinfo;
   }
@@ -580,11 +583,6 @@ void free_token(token* token_ptr)
  */
 
 
-int check_sched_job(JobInfo *job, void * UNUSED(arg))
-  {
-  return (job -> state == JobExiting) || (job -> state == JobRunning) || (job -> state == JobCompleted);
-  }
-
 int parse_head_number(const char* job_on_cpu)
   {
   int cpu,i;
@@ -619,11 +617,11 @@ const char* parse_name_job_on_cpu(const char* job_on_cpu)
   }
 
 
-JobInfo* find_job_name(JobInfo **possible_jobs, const char* job_name)
+JobInfo* find_job_name(std::vector<JobInfo*> possible_jobs, const char* job_name)
   {
   int i;
 
-  if (possible_jobs == NULL)
+  if (possible_jobs.empty())
     return NULL;
 
   i=0;
@@ -638,7 +636,7 @@ JobInfo* find_job_name(JobInfo **possible_jobs, const char* job_name)
   return NULL;
   }
 
-int assign_jobs_on_cpu(JobInfo **jobs_on_cpu, const char* job_on_cpu, JobInfo **possible_jobs)
+int assign_jobs_on_cpu(JobInfo **jobs_on_cpu, const char* job_on_cpu, std::vector<JobInfo*> possible_jobs)
   {
   const char *job_name;
   int cpu;

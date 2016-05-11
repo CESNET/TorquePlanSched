@@ -143,7 +143,7 @@ plan_list* gap_create_not_the_last(int num_cpus, first_free_slot **first_free_sl
 	  if (gap_end > gap_start)
         {
 	    new_gap = (plan_gap*) list_add_end(gaps_list, gap_fillin((plan_gap*)NULL, gap_start, gap_end, gap_end - gap_start, gap_usage, (plan_job*)NULL, (plan_gap*)NULL, (plan_gap*)NULL));
-	    new_gap -> nodes_memory = gap_memory_create_last(new_gap, (plan_job*)NULL, num_cpus, first_free_slots);
+	    new_gap -> nodes_memory = gap_memory_create_last(new_gap, num_cpus, first_free_slots);
 	    }
 
 	  gap_start = first_free_slots[cpu_index] -> time;
@@ -213,7 +213,6 @@ void* gap_create_last(time_t start_time, plan_cluster* cluster_k)
 
       num_nodese_online++;
 
-      adjust_mem_gap_position(gap -> nodes_memory, num_nodese_online, num_nodese_online-1);
       }
 
     gap -> num_nodes = num_nodese_online;
@@ -433,11 +432,13 @@ plan_gap* find_first_gap(sched* schedule, int k, plan_job* job, bool fix_job)
 
 	      num_considered_gaps=add_gap_to_considered(num_considered_gaps,next_gap);
 
-	      if (duration >= job -> estimated_processing && plan_num_nodes == job -> req_num_nodes)
-	    	if (check_considered_gaps(num_considered_gaps, job, schedule, k))
+	      if (duration >= job -> estimated_processing && plan_num_nodes == job -> req_num_nodes){
+	    	  if (check_considered_gaps(num_considered_gaps, job, schedule, k)) {
 	    		return current_gap;
-	    	else
+	    	  } else {
 	    	  continue;
+                  }
+                }
 	      }
 
 	    if (next_gap != NULL && next_gap -> start_time != next_gap -> predeccessor -> end_time)
@@ -474,8 +475,6 @@ plan_gap* find_first_gap(sched* schedule, int k, plan_job* job, bool fix_job)
 
 int job_put_in_gap(sched* schedule, int k, plan_job* job, plan_gap* gap)
   {
-  void *next_gap, *new_gap, *following_job;
-
   if (job -> req_ppn > gap -> usage)
     return 1;
 

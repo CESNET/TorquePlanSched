@@ -508,6 +508,10 @@ queue_info *query_queue_info(struct batch_status *queue, server_info *sinfo)
       {
       int i;
       qinfo->excl_nodes_only = 1;
+      
+      /* plan-based sched*/
+      qinfo->required_property = strdup(attrp->value);
+      
       /* check all nodes for the property */
       for (i = 0; i < sinfo->num_nodes; i++)
         {
@@ -587,6 +591,8 @@ queue_info *new_queue_info()
 
   qinfo -> fairshare_tree = strdup("default");
 
+  qinfo -> required_property = NULL;
+  
   return qinfo;
   }
 
@@ -648,6 +654,8 @@ void free_queue_info(queue_info *qinfo)
   free(qinfo -> name);
   free(qinfo -> excl_nodes);
   free(qinfo -> fairshare_tree);
+  if (qinfo -> required_property != NULL)
+    free(qinfo -> required_property);
   delete qinfo;
   }
 

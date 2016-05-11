@@ -243,7 +243,6 @@ double fairshare_result_common()
 double fairshare_result_max()
   {
   long double res = 0;
-  long double wt = 0;
   long double total_user_wt = 0;
   long double uwt = 0;
 

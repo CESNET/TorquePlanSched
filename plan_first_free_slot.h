@@ -31,7 +31,7 @@ int first_free_slots_initialize(plan_cluster* cluster_k, first_free_slot **first
 /*
  * update first_free_slots during update_plan
  */
-void first_free_slots_update(plan_job* job, int num_first_free_slot, first_free_slot **first_free_slots);
+void first_free_slots_update(plan_job* job, first_free_slot **first_free_slots);
 void first_free_slots_update_exclusive(plan_job* job, int num_first_free_slot, first_free_slot **first_free_slots);
 
 #endif

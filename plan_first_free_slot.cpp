@@ -84,8 +84,6 @@ int first_free_slots_initialize(plan_cluster* cluster_k, first_free_slot **first
   sch_resource_t mem_amount;
   sch_resource_t scratch_local_amount;
 
-  struct resource *mem;
-  struct resource *scratch_local;
   int job_usage;
   int running_cpu = cluster_k -> num_cpus;
 
@@ -190,16 +188,13 @@ int first_free_slots_initialize(plan_cluster* cluster_k, first_free_slot **first
 
 
 
-void first_free_slots_update(plan_job* job, int num_first_free_slot, first_free_slot **first_free_slots)
+void first_free_slots_update(plan_job* job, first_free_slot **first_free_slots)
   {
-  int mem_slot_index;
-  int mem_slot_releated_index;
-
   int first_cpu_node;
   int cpu_index;
 
   sch_resource_t new_mem;
-  sch_resource_t new_scratch_local, new_scratch_ssd;
+  sch_resource_t new_scratch_local;
 
   // j  udava kolikatej uzel updatujeme, pokud je na jeden uzel royvreno vice ppn, pak ho updatujeme vicerkat
   for (int j = 0; j < job -> req_num_nodes; j++)
@@ -294,14 +289,11 @@ void first_free_slots_update(plan_job* job, int num_first_free_slot, first_free_
 
 void first_free_slots_update_exclusive(plan_job* job, int num_first_free_slot, first_free_slot **first_free_slots)
   {
-  int mem_slot_index;
-  int mem_slot_releated_index;
-
   int first_cpu_node;
   int cpu_index;
 
   sch_resource_t new_mem;
-  sch_resource_t new_scratch_local, new_scratch_ssd;
+  sch_resource_t new_scratch_local;
 
   // j  udava kolikatej uzel updatujeme, pokud je na jeden uzel royvreno vice ppn, pak ho updatujeme vicerkat
   for (int j = 0; j < job -> req_num_nodes; j++)

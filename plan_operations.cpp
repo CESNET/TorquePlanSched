@@ -105,7 +105,7 @@ long int find_earliest_node(int counter, plan_job* job, int num_first_free_slot,
 
   if (counter == 0) {
 	  for (int j = 0; j<job->req_num_nodes; j++)
-		  job -> ninfo_arr[j] == NULL;
+		  job -> ninfo_arr[j] = NULL;
   }
 
   for (int i = 0; i < num_first_free_slot; i++)
@@ -153,7 +153,7 @@ long int find_earliest_node(int counter, plan_job* job, int num_first_free_slot,
   return overall_earliest_time;
   }
 
-plan_list* update_job(int pbs_sd, plan_job* job, int num_first_free_slot, first_free_slot **first_free_slots, plan_list* limits, int k, plan_cluster* cluster)
+plan_list* update_job(plan_job* job, int num_first_free_slot, first_free_slot **first_free_slots, plan_list* limits, plan_cluster* cluster)
   {
   plan_list* gaps_list;
   plan_gap* new_gap;
@@ -165,12 +165,10 @@ plan_list* update_job(int pbs_sd, plan_job* job, int num_first_free_slot, first_
   int job_cpu;
   int tmp_job_cpu;
   int attempt_count;
-  int next_time;
   int node_latest_cpu_index;
   int total_latest_cpu_index;
   int *tmp_cpu_arr;
   int plan_num_nodes;
-  int excl_job_exception;
   int wipe_fixed_nodes;
   int node_prohibited;
   int *node_ppn_free;
@@ -332,11 +330,6 @@ plan_list* update_job(int pbs_sd, plan_job* job, int num_first_free_slot, first_
   job -> start_time = -1;
   job -> completion_time = -1;
 
-  if (job->jinfo->is_exclusive())
-	  excl_job_exception = 1;
-  else
-	  excl_job_exception = 0;
-
   for (int i = 0; i < job -> usage; i++)
 	job -> cpu_indexes[i] = -1;
 
@@ -350,19 +343,8 @@ plan_list* update_job(int pbs_sd, plan_job* job, int num_first_free_slot, first_
   tmp_job_cpu = 0;
   job_cpu = 0;
 
-  long int latest_considered_node_ffs_time;
-  long int min_considered_node_ffs_time;
-  long int excl_start_time = 4091930266;
-  node_info* best_node;
-  int node_found;
-
   if (job->jinfo->is_exclusive())
     {
-
-	latest_considered_node_ffs_time = 0;
-	min_considered_node_ffs_time = 0;
-
-	best_node = NULL;
 	considered_node = NULL;
 
 	for (int excl_nodes_counter=0; excl_nodes_counter<job->req_num_nodes; excl_nodes_counter++)
@@ -524,8 +506,6 @@ plan_list* update_job(int pbs_sd, plan_job* job, int num_first_free_slot, first_
 	  node_latest_cpu_index = -1;
 	  plan_num_nodes++;
 
-	  if (plan_num_nodes == job->req_num_nodes)
-		  excl_job_exception = 0;
 	  }
 
 	job_cpu++;
@@ -609,7 +589,7 @@ plan_list* update_job(int pbs_sd, plan_job* job, int num_first_free_slot, first_
 		  gap_end = first_free_slots[cpu_index] -> time;
 
 		  new_gap = (plan_gap*) list_add_end(gaps_list, gap_fillin((plan_gap*) NULL, gap_start, gap_end, gap_end - gap_start, gap_usage, job, (plan_gap*)NULL, (plan_gap*)NULL));
-		  new_gap -> nodes_memory = gap_memory_create(new_gap, job, num_first_free_slot, first_free_slots);
+		  new_gap -> nodes_memory = gap_memory_create(new_gap, job, first_free_slots);
 
 		  gap_start = first_free_slots[cpu_index] -> time;
 		  }
@@ -642,7 +622,7 @@ plan_list* update_job(int pbs_sd, plan_job* job, int num_first_free_slot, first_
 	  gap_end = first_free_slots[cpu_index] -> time;
 
 	  new_gap = (plan_gap*) list_add_end(gaps_list, gap_fillin((plan_gap*) NULL, gap_start, gap_end, gap_end - gap_start, gap_usage, job, (plan_gap*)NULL, (plan_gap*)NULL));
-	  new_gap -> nodes_memory = gap_memory_create(new_gap, job, num_first_free_slot, first_free_slots);
+	  new_gap -> nodes_memory = gap_memory_create(new_gap, job, first_free_slots);
 
 	  gap_start = first_free_slots[cpu_index] -> time;
 	  }
@@ -655,7 +635,7 @@ plan_list* update_job(int pbs_sd, plan_job* job, int num_first_free_slot, first_
       first_free_slots_update_exclusive(job, num_first_free_slot, first_free_slots);
 
   if (!job->jinfo->is_exclusive())
-    first_free_slots_update(job, num_first_free_slot, first_free_slots);
+    first_free_slots_update(job, first_free_slots);
 
   free(tmp_cpu_arr);
   free(node_ppn_free);
@@ -663,7 +643,7 @@ plan_list* update_job(int pbs_sd, plan_job* job, int num_first_free_slot, first_
   }
 
 
-int update_sched(int pbs_sd, sched* schedule, int k, time_t time)
+int update_sched(sched* schedule, int k, time_t time)
   {
   plan_list* gaps_job;
   plan_job* job_to_update;
@@ -737,7 +717,7 @@ int update_sched(int pbs_sd, sched* schedule, int k, time_t time)
 	  {
 	  schedule -> clusters[k] -> num_queued_jobs++;
 
-	  gaps_job = update_job(pbs_sd, job_to_update, cluster_k -> num_cpus, first_free_slots, schedule ->limits[k], k, schedule -> clusters[k]);
+	  gaps_job = update_job(job_to_update, cluster_k -> num_cpus, first_free_slots, schedule ->limits[k], schedule -> clusters[k]);
 
 	  if (gaps_job == NULL) {
 		  sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "job_update_failed", "job: %s", job_to_update -> jinfo -> job_id.c_str());
@@ -828,7 +808,6 @@ int update_planned_start(int pbs_sd, sched* schedule, int k)
 
 int update_planned_nodes(int pbs_sd, sched* schedule, int k)
   {
-  int num_ppn;
   plan_job* job;
   char* planned_nodes;
 
@@ -845,7 +824,6 @@ int update_planned_nodes(int pbs_sd, sched* schedule, int k)
     if (string(job->jinfo->job_id).find(conf.local_server) == string::npos)
     	continue;
 
-	num_ppn = 0;
 	if ((planned_nodes = (char*)realloc(planned_nodes, 50 * job -> req_num_nodes)) == NULL)
       {
       perror("Memory Allocation Error");
@@ -856,12 +834,16 @@ int update_planned_nodes(int pbs_sd, sched* schedule, int k)
 	{
 	for (int i = 0; i < job -> req_num_nodes;i++)
 	  {
+            //parallel job can be on one node
+          if (job -> ninfo_arr[i] == NULL)
+                continue;
+            
 	  if (i == 0 )
 	  {sprintf(planned_nodes, "%s",job -> ninfo_arr[i] -> get_name());}
 	  else
 	  {sprintf(planned_nodes, "%s, %s",planned_nodes, job -> ninfo_arr[i] -> get_name());}
 	  }
-    } else {sprintf(planned_nodes, "");}
+    } else {planned_nodes = strdup("");}
 
 	update_job_planned_nodes(pbs_sd, job -> jinfo, planned_nodes);
     }

@@ -19,7 +19,7 @@
 /*
  * Update schedule - probably the most important operation
  */
-int update_sched(int pbs_sd, sched* schedule, int k, time_t time);
+int update_sched(sched* schedule, int k, time_t time);
 
 /*
  * inform the server about planned start times

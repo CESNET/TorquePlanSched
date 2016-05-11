@@ -20,6 +20,6 @@
  * start the optimization of the current plan
  * this will stop after certain time or after certain number of itarations
  */
-int plan_optimization(int pbs_sd, sched* schedule, time_t time);
+int plan_optimization(sched* schedule, time_t time);
 
 #endif

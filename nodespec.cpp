@@ -499,7 +499,7 @@ char* nodes_preassign_string(JobInfo *jinfo, node_info **ninfo_arr, int count, i
  * @param ninfo_arr List of nodes to parse
  * @return Allocated string containing the targets
  */
-char* nodes_preassign_string_new(JobInfo *jinfo, node_info **ninfo_arr, int count, int &booting, double &minspec)
+char* nodes_preassign_string_new(JobInfo *jinfo, node_info **ninfo_arr, int count, int &booting)
   {
   stringstream s;
   bool first = true;

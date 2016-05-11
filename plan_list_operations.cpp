@@ -117,7 +117,6 @@ void* get_successor(void* item,listtype type)
   if (item == NULL)
     return NULL;
 
-  void* suc;
   /*
   return ((plan_item*) item)->successor;
   */
@@ -492,7 +491,7 @@ int list_adjust_job_position(plan_list* list, plan_job* job)
 		)
     new_successor = new_successor -> successor;
 
-  if (new_successor != job -> successor)
+  if (new_successor != job -> successor) {
     if (new_successor == NULL)
     {
 	new_predeccessor = (plan_job*)list -> last;
@@ -500,6 +499,7 @@ int list_adjust_job_position(plan_list* list, plan_job* job)
     {
     new_predeccessor = new_successor -> predeccessor;
     }
+  }
 
   if (new_predeccessor != job -> predeccessor)
     list_move_item(list, (void*) job, (void*) new_predeccessor);

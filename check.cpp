@@ -647,15 +647,9 @@ int check_ignored(queue_info *qinfo)
   return SUCCESS;
 }
 
-int is_ok_to_run_job_new(int pbs_sd, node_info **ninfo_arr, int node_count, server_info *sinfo, queue_info *qinfo, JobInfo *jinfo, int preassign_starving)
+int is_ok_to_run_job_new(node_info **ninfo_arr, int node_count, server_info *sinfo, queue_info *qinfo, JobInfo *jinfo, int preassign_starving)
   {
   int rc;                       /* Return Code */
-
-  if ((rc = jinfo->preprocess()) != SUCCESS)
-    {
-    sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_JOB, jinfo->job_id.c_str(), "Couldn't process jobs nodespec.");
-    return rc;
-    }
 
   if ((rc = check_server_max_run(sinfo)))
     {
@@ -664,14 +658,14 @@ int is_ok_to_run_job_new(int pbs_sd, node_info **ninfo_arr, int node_count, serv
     return rc;
     }
 
-  if ((rc = check_server_max_user_run(sinfo, (char*)jinfo -> account.c_str())))
+  if ((rc = check_server_max_user_run(sinfo, jinfo -> account)))
     {
     sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_JOB, jinfo->job_id.c_str(),
               "Server limit of per user running jobs already reached.");
     return rc;
     }
 
-  if ((rc = check_server_max_group_run(sinfo, (char*)jinfo -> group.c_str())))
+  if ((rc = check_server_max_group_run(sinfo, jinfo -> group)))
     {
     sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_JOB, jinfo->job_id.c_str(),
               "Server limit of per group running jobs already reached.");
@@ -685,14 +679,14 @@ int is_ok_to_run_job_new(int pbs_sd, node_info **ninfo_arr, int node_count, serv
     return rc;
     }
 
-  if ((rc = check_queue_max_user_run(qinfo, (char*)jinfo -> account.c_str())))
+  if ((rc = check_queue_max_user_run(qinfo, jinfo -> account)))
     {
     sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_JOB, jinfo->job_id.c_str(),
               "Queue limit of per user running jobs already reached.");
     return rc;
     }
 
-  if ((rc = check_queue_max_group_run(qinfo, (char*)jinfo -> group.c_str())))
+  if ((rc = check_queue_max_group_run(qinfo, jinfo -> group)))
     {
     sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_JOB, jinfo->job_id.c_str(),
               "Queue limit of per group running jobs already reached.");

@@ -127,8 +127,6 @@ plan_job** backup_job_order(sched* schedule, int k)
 int restore_job_order(sched* schedule, int k, plan_job** backup)
   {
   int i;
-  void* successor;
-  void* predeccessor;
   void* item;
 
   if ((k >= schedule -> num_clusters) || (schedule -> jobs[k] == NULL) || (schedule -> jobs[k] -> num_items == 0) || (backup == NULL))
@@ -173,23 +171,18 @@ int restore_job_order(sched* schedule, int k, plan_job** backup)
   }
 
 
-int random_job_to_random_position(int pbs_sd,sched* schedule, int k, time_t time)
+int random_job_to_random_position(sched* schedule, int k, time_t time)
   {
   plan_job* job;
   plan_job* job_tmp;
-  plan_gap* gap;
-  int i;
 
   plan_job* predeccessor;
-
-  int rand_iter;
 
   if (schedule -> clusters[k] -> num_queued_jobs < conf.optim_minimal_queued)
     return 1;
 
   job = NULL;
   job_tmp = NULL;
-  gap = NULL;
 
   do
     {
@@ -203,8 +196,8 @@ int random_job_to_random_position(int pbs_sd,sched* schedule, int k, time_t time
 
   list_remove_item(schedule -> jobs[k], (void*) job, 0);
 
-  if (update_sched(pbs_sd, schedule, k, time)==2)
-      update_sched(pbs_sd, schedule, k, time);
+  if (update_sched(schedule, k, time)==2)
+      update_sched(schedule, k, time);
 
   job_tmp = NULL;
 
@@ -223,26 +216,21 @@ int random_job_to_random_position(int pbs_sd,sched* schedule, int k, time_t time
     list_add_begin(schedule -> jobs[k],(void*) job);
     }
 
-  if (update_sched(pbs_sd, schedule, k, time)==2)
-      update_sched(pbs_sd, schedule, k, time);
+  if (update_sched(schedule, k, time)==2)
+      update_sched(schedule, k, time);
 
   return 0;
   }
 
-int random_job_to_first_gap(int pbs_sd, sched* schedule, int k, time_t time)
+int random_job_to_first_gap(sched* schedule, int k, time_t time)
   {
   plan_job* job;
-  plan_job* job_tmp;
   plan_gap* gap;
-  int i;
-
-  int rand_iter;
 
   if (schedule -> clusters[k] -> num_queued_jobs < conf.optim_minimal_queued)
     return 1;
 
   job = NULL;
-  job_tmp = NULL;
   gap = NULL;
 
   do
@@ -255,8 +243,8 @@ int random_job_to_first_gap(int pbs_sd, sched* schedule, int k, time_t time)
 
   list_remove_item(schedule -> jobs[k], (void*) job, 0);
 
-  if (update_sched(pbs_sd, schedule, k, time)==2)
-      update_sched(pbs_sd, schedule, k, time);
+  if (update_sched(schedule, k, time)==2)
+      update_sched(schedule, k, time);
 
   gap = find_first_gap(schedule, k, job, true);
 
@@ -265,13 +253,13 @@ int random_job_to_first_gap(int pbs_sd, sched* schedule, int k, time_t time)
 
   job_put_in_gap(schedule, k, job, gap);
 
-  if (update_sched(pbs_sd, schedule, k, time)==2)
-      update_sched(pbs_sd, schedule, k, time);
+  if (update_sched(schedule, k, time)==2)
+      update_sched(schedule, k, time);
 
   return 0;
   }
 
-int plan_optimization(int pbs_sd, sched* schedule, time_t time_now)
+int plan_optimization(sched* schedule, time_t time_now)
   {
   int cl_number;
   int num_queued;
@@ -285,7 +273,7 @@ int plan_optimization(int pbs_sd, sched* schedule, time_t time_now)
   
   struct timeval tv_start;
   struct timeval tv_step1;
-  struct timeval tv_step2;
+  //struct timeval tv_step2;
   long long step_time;  
 
   double weight_slowdown;
@@ -342,7 +330,7 @@ int plan_optimization(int pbs_sd, sched* schedule, time_t time_now)
 	backup = backup_job_order(schedule,cl_number);
 
 	//res = random_job_to_first_gap(pbs_sd, schedule, cl_number,time_now);
-	res = random_job_to_random_position(pbs_sd, schedule, cl_number,time_now);
+	res = random_job_to_random_position(schedule, cl_number,time_now);
 
 	if (res == 0) {
             num_attempts++;
@@ -401,7 +389,7 @@ int plan_optimization(int pbs_sd, sched* schedule, time_t time_now)
             } else {
                 restore_job_order(schedule, cl_number, backup);
                 job_free_fixnodes_backup(schedule, cl_number);
-                update_sched(pbs_sd, schedule, cl_number, time_now);
+                update_sched(schedule, cl_number, time_now);
                 evaluation_after = evaluate_schedule(schedule);
                 
                

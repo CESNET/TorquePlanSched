@@ -69,7 +69,7 @@ struct cluster_limits_arrays*
 find_limits_for_cluster (char* cluster, int running_cpus)
 {
   if(NULL==cluster){
-      cluster="";
+      cluster=strdup("");
   }
   std::map<long, struct cluster_limits_arrays>* limit_array;
   //printf ("DEBUG: looking for cluster %s in %d clusters.\n", cluster,	  conf.limits_for_clusters->size ());
@@ -201,7 +201,7 @@ int limit_find_account(plan_limit* limit, int account_id)
 
 int walltime_suits_to_limit(int walltime, plan_cluster* cluster)
   {
-  int found_limit = -1;
+  unsigned int found_limit = 0;
   //printf ("DEBUG: looking for threshold for cluster %s with %d cpus.\n", cluster->cluster_name, cluster->num_running_cpus);
   struct cluster_limits_arrays* limits;
   limits = find_limits_for_cluster (cluster->cluster_name, cluster->num_running_cpus);
@@ -468,7 +468,7 @@ void update_limits_values(sched* schedule, int k)
   struct cluster_limits_arrays* limits;
   limits = find_limits_for_cluster (schedule->clusters[k]->cluster_name, schedule->clusters[k]->num_running_cpus);
   //printf("DEBUG: selected limit of sizes %d and %d.\n",limits->percentages.size(),limits->percentages_global.size());
-  for (int i=0; i<limits->tresholds.size();i++)
+  for (unsigned int i=0; i<limits->tresholds.size();i++)
     {
       //DEBUG
   //    printf("%f = %f",percentages[select_limit_array][i],limits->limits_percentages[i]);

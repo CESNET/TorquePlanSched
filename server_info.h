@@ -177,9 +177,9 @@ int parse_head_number(const char* job_on_cpu);
 
 const char* parse_name_job_on_cpu(const char* job_on_cpu);
 
-JobInfo* find_job_name(JobInfo **possible_jobs, char* job_name);
+JobInfo* find_job_name(std::vector<JobInfo*> possible_jobs, char* job_name);
  
-int assign_jobs_on_cpu(JobInfo **jobs_on_cpu, const char* job_on_cpu, JobInfo **possible_jobs);
+int assign_jobs_on_cpu(JobInfo **jobs_on_cpu, const char* job_on_cpu, std::vector<JobInfo*> possible_jobs);
 int check_sched_job(JobInfo *job, void *arg);
 
 #endif

@@ -838,7 +838,7 @@ int update_job_planned_start(int pbs_sd, plan_job *job)
     if (job->start_time > 946681200)
       sprintf(buffer, "%ld", job->start_time);
     else {
-      sprintf(buffer, "%ld", 0);
+      sprintf(buffer, "%d", 0);
       attr.op = UNSET;
     }
 

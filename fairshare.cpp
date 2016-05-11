@@ -313,11 +313,14 @@ bool compare_fairshare(JobInfo *job_i, JobInfo *job_j)
 	if (job_i->state != JobRunning && job_j->state == JobRunning)
 		return false;
 
-	if (job_i->state == JobRunning && job_j->state == JobRunning)
-		if (atoi(job_i->job_id.c_str()) < atoi(job_j->job_id.c_str()))
+	if (job_i->state == JobRunning && job_j->state == JobRunning) {
+		if (atoi(job_i->job_id.c_str()) < atoi(job_j->job_id.c_str())) {
 			return true;
-		else
+                }
+		else {
 			return false;
+                }
+        }
 
 	if (job_i->state == JobQueued && job_j->state != JobQueued)
 		return true;
@@ -325,11 +328,14 @@ bool compare_fairshare(JobInfo *job_i, JobInfo *job_j)
 	if (job_i->state != JobQueued && job_j->state == JobQueued)
 		return false;
 
-	if (job_i->state != JobQueued && job_j->state != JobQueued)
-		if (atoi(job_i->job_id.c_str()) < atoi(job_j->job_id.c_str()))
+	if (job_i->state != JobQueued && job_j->state != JobQueued){
+		if (atoi(job_i->job_id.c_str()) < atoi(job_j->job_id.c_str())) {
 			return true;
-		else
+                }
+		else {
 			return false;
+                }
+        }
 
 	cur_value_i = job_i -> ginfo -> percentage / job_i -> ginfo -> temp_usage;
 	cur_value_j = job_j -> ginfo -> percentage / job_j -> ginfo -> temp_usage;

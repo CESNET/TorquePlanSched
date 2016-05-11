@@ -383,3 +383,9 @@ pars_spec *JobInfo::parsed_nodespec() const
 
   return this->p_parsed_nodespec;
   }
+
+void JobInfo::clean_parsed_nodespec()
+  {
+  free_parsed_nodespec(this->p_parsed_nodespec);
+  this->p_parsed_nodespec = NULL;
+  }
