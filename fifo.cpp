@@ -123,6 +123,7 @@ extern "C" {
 
 #include "api.hpp"
 #include <sstream>
+#include <stdexcept>
 using namespace std;
 
 /* new scheduler */
