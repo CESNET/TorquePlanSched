@@ -568,142 +568,134 @@ int World::try_run_plan(sched* schedule, time_t time_now)
 
   int booting = 0;
   double minspec = 0;
+  bool remote = false;
+  int socket;
 
   int ret = SUCCESS;  /* return code from is_ok_to_run_job() */
 
   for (cl_number = 0; cl_number < schedule -> num_clusters; cl_number++)
     {
-	schedule -> jobs[cl_number] -> current = NULL;
-	while (list_get_next(schedule -> jobs[cl_number]) != NULL)
-	  {
-		job = (plan_job*) schedule -> jobs[cl_number] -> current;
+    schedule -> jobs[cl_number] -> current = NULL;
+    while (list_get_next(schedule -> jobs[cl_number]) != NULL)
+      {
+      job = (plan_job*) schedule -> jobs[cl_number] -> current;
                 
-                if (job->available_after > time_now)
-                    continue;
+      if (job->available_after > time_now)
+        continue;
 
-		if (job -> jinfo -> state != JobRunning && job -> start_time < 0)
-		  {
-		  sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_JOB, job -> jinfo -> job_id.c_str(), "Job on bad cluster - no suitable node. Need to move to other cluster. Not implemented yet.");
-		  list_remove_item(schedule -> jobs[cl_number], job, 1);
-		  continue;
-		  }
+      if (job -> jinfo -> state != JobRunning && job -> start_time < 0)
+        {
+        sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_JOB, job -> jinfo -> job_id.c_str(), "Job on bad cluster - no suitable node. Need to move to other cluster. Not implemented yet.");
+        list_remove_item(schedule -> jobs[cl_number], job, 1);
+        continue;
+        }
 
-		if (job -> jinfo -> state == JobQueued && job -> start_time <= time_now && job -> start_time > 946684800)
-		  {
-		  jinfo = job -> jinfo;
-		  sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_JOB, jinfo -> job_id.c_str(), "Trying to run job.");
+      if (job -> jinfo -> state == JobQueued && job -> start_time <= time_now && job -> start_time > 946684800)
+        {
+        jinfo = job -> jinfo;
+        sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_JOB, jinfo -> job_id.c_str(), "Trying to run job.");
 
-		  if (jinfo->placement != "" and jinfo->placement[0] == '^')
-			jinfo->placement = "";
+        if (jinfo->placement != "" and jinfo->placement[0] == '^')
+          jinfo->placement = "";
 
-		  distinct_num_nodes = job_create_nodespec(job);
+        distinct_num_nodes = job_create_nodespec(job);
 
-		  bool remote = false;
-		  int socket;
-		  if (string(jinfo->job_id).find(conf.local_server) == string::npos)
-		    {
-		    remote = true;
-		    string jobid = string(jinfo->job_id);
-		    size_t firstdot = jobid.find('.');
-		    string server_name = jobid.substr(firstdot+1);
+        remote = false;
+		  
+        if (string(jinfo->job_id).find(conf.local_server) == string::npos)
+          {
+          remote = true;
+          string jobid = string(jinfo->job_id);
+          size_t firstdot = jobid.find('.');
+          string server_name = jobid.substr(firstdot+1);
 
-		    socket = p_connections.get_connection(server_name);
-		    }
-		  else
-		    {
-		    socket = p_connections.get_master_connection();
-		    }
+          socket = p_connections.get_connection(server_name);
+          } 
+        else
+          {
+          socket = p_connections.get_master_connection();
+          }
 
-		  sinfo = schedule -> clusters[cl_number] -> sinfo;
+        sinfo = schedule -> clusters[cl_number] -> sinfo;
                   
-                  jinfo->clean_parsed_nodespec();
+        jinfo->clean_parsed_nodespec();
 
-                  try_run_return = is_ok_to_run_job_new(job -> ninfo_arr, distinct_num_nodes, sinfo, jinfo -> queue, jinfo, 0);
+        try_run_return = is_ok_to_run_job_new(job -> ninfo_arr, distinct_num_nodes, sinfo, jinfo -> queue, jinfo, 0);
                   
-                  if (try_run_return == INSUFICIENT_DYNAMIC_RESOURCE) {
-                      job -> available_after = time_now + 1800;
-		      continue;
-                  }
+        if (try_run_return == INSUFICIENT_DYNAMIC_RESOURCE)
+          {
+          job -> available_after = time_now + 1800;
+	  continue;
+          }
                        
-		  if (try_run_return != SUCCESS)
-			  continue;
+        if (try_run_return != SUCCESS)
+          continue;
 
-		  if (remote)      {
-		      string destination = string(jinfo->queue->name)+string("@")+string(conf.local_server);
+        best_node_name = nodes_preassign_string_new(jinfo, job -> ninfo_arr, distinct_num_nodes, booting);
+        
+        if (remote)
+          {
+	  string destination = string(jinfo->queue->name)+string("@")+string(conf.local_server);
+          
+          DIS_tcp_settimeout(p_info->job_start_timeout*2+30); /* move + run, double the tolerance */
+          
+          sched_log(PBSEVENT_SCHED, PBS_EVENTCLASS_JOB, "remote best_node_name", "job: %s best_node: %s",jinfo->job_id.c_str(), best_node_name);
+	  sched_log(PBSEVENT_SCHED, PBS_EVENTCLASS_JOB, "remote ", "job: %s destination: %s",jinfo->job_id.c_str(), (char*)destination.c_str());
+          
+          ret = pbs_movejob(socket, const_cast<char*>(jinfo->job_id.c_str()), const_cast<char*>(destination.c_str()), best_node_name);
+          }
+        else
+	  {
+	  sched_log(PBSEVENT_SCHED, PBS_EVENTCLASS_JOB, "best_node_name", "job: %s best_node: %s",jinfo->job_id.c_str(), best_node_name);
+          
+          DIS_tcp_settimeout(p_info->job_start_timeout+30); /* add a generous 30 seconds communication overhead */
+          
+          ret = pbs_runjob(socket, const_cast<char*>(jinfo->job_id.c_str()), best_node_name, NULL);
+	  //ret = pbs_runjob(socket, (char*)jinfo->job_id.c_str(), best_node_name, NULL);
+          }
+        
+	job -> sch_nodespec = NULL;
 
-		      //DIS_tcp_settimeout(p_info->job_start_timeout*2+30); /* move + run, double the tolerance */
+        double final_fairshare = minspec * jinfo->queue->queue_cost * jinfo->calculated_fairshare;
+	update_job_fairshare(socket, jinfo, final_fairshare);
 
-		      if (best_node_name == NULL)
-		        {
-		        best_node_name = nodes_preassign_string_new(jinfo, job -> ninfo_arr, distinct_num_nodes, booting);
-		        }
+        if (ret == 0)
+          {
+          RescInfoDb::iterator j;
+          for (j = resc_info_db.begin(); j != resc_info_db.end(); j++)
+            {
+            resource_req *resreq;
 
-		      sched_log(PBSEVENT_SCHED, PBS_EVENTCLASS_JOB, "remote best_node_name", "job: %s best_node: %s",jinfo->job_id.c_str(), best_node_name);
-		      sched_log(PBSEVENT_SCHED, PBS_EVENTCLASS_JOB, "remote ", "job: %s destination: %s",jinfo->job_id.c_str(), (char*)destination.c_str());
+            /* skip non-dynamic resource */
+            if (j->second.source != ResCheckDynamic)
+              continue;
 
-		      ret = pbs_movejob(socket, (char*)jinfo->job_id.c_str(), (char*)destination.c_str(), best_node_name);
-		      }
-		    else
-		  {
-		  //jinfo->preprocess();
-		  best_node_name = nodes_preassign_string_new(jinfo, job -> ninfo_arr, distinct_num_nodes, booting);
-		  sched_log(PBSEVENT_SCHED, PBS_EVENTCLASS_JOB, "best_node_name", "job: %s best_node: %s",jinfo->job_id.c_str(), best_node_name);
-		  ret = pbs_runjob(socket, (char*)jinfo->job_id.c_str(), best_node_name, NULL);
-		  //if (run_update_job_new(socket, job -> ninfo_arr, distinct_num_nodes, sinfo, jinfo -> queue, jinfo) != 0)
-		    //jinfo -> can_not_run = 1;
-		  }
-		  job -> sch_nodespec = NULL;
+            /* no request for this resource */
+            if ((resreq = find_resource_req(jinfo->resreq, j->second.name.c_str())) == NULL)
+              continue;
 
-		  double final_fairshare = minspec * jinfo->queue->queue_cost * jinfo->calculated_fairshare;
-		  update_job_fairshare(socket, jinfo, final_fairshare);
-
-		  if (ret == 0)
-		    {
-
-			    RescInfoDb::iterator j;
-			    for (j = resc_info_db.begin(); j != resc_info_db.end(); j++)
-			      {
-			      resource_req *resreq;
-
-			      /* skip non-dynamic resource */
-			      if (j->second.source != ResCheckDynamic)
-			        continue;
-
-			      /* no request for this resource */
-			      if ((resreq = find_resource_req(jinfo->resreq, j->second.name.c_str())) == NULL)
-			        continue;
-
-			      map<string,DynamicResource>::iterator it = sinfo->dynamic_resources.find(j->second.name);
-			      if (it != sinfo->dynamic_resources.end())
-			        {
-			        it->second.add_scheduled(resreq->amount);
-			        }
-			      }
-
-
-
-
-
-
-
-
-		    if (!booting)
-		      {
-		      sched_log(PBSEVENT_SCHED, PBS_EVENTCLASS_JOB, jinfo -> job_id.c_str(), "Job Run.");
-		      }
-		    else
-		      {
-		      sched_log(PBSEVENT_SCHED, PBS_EVENTCLASS_JOB, jinfo -> job_id.c_str(), "Job Waiting for booting node.");
-		      }
-		    }
-
-
-		  /* refresh magrathea state after run succeeded or failed */
-		  query_external_cache(sinfo,1);
-		  //job_nodes[0]=NULL;
-		  //free(job_nodes);
-		  }
-	  }
+            map<string,DynamicResource>::iterator it = sinfo->dynamic_resources.find(j->second.name);
+            if (it != sinfo->dynamic_resources.end())
+              {
+              it->second.add_scheduled(resreq->amount);
+              }
+            }
+          if (!booting)
+            {
+            sched_log(PBSEVENT_SCHED, PBS_EVENTCLASS_JOB, jinfo -> job_id.c_str(), "Job Run.");
+            }
+          else
+            {
+            sched_log(PBSEVENT_SCHED, PBS_EVENTCLASS_JOB, jinfo -> job_id.c_str(), "Job Waiting for booting node.");
+            }
+          }
+        
+        /* refresh magrathea state after run succeeded or failed */
+        query_external_cache(sinfo,1);
+        //job_nodes[0]=NULL;
+        //free(job_nodes);
+        }
+      }
     }
   return 0;
   }

@@ -262,8 +262,11 @@ CheckResult try_assign_spec(JobInfo *jinfo, const vector<node_info*>& nodes)
     {
     // nodes suitable for nodespec
     vector<node_info*> fit_nodes, reboot_nodes;
-    NodeSuitableForSpec::filter_assign(nodes,fit_nodes,jinfo,iter);
+    //NodeSuitableForSpec::filter_assign(nodes,fit_nodes,jinfo,iter);
     NodeSuitableForSpec::filter_reboot(nodes,reboot_nodes,jinfo,iter);
+    
+    /* plan-based sched */
+    fit_nodes = nodes;
 
     // count unique nodes
     set<string> unique_jobs;
