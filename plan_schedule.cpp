@@ -685,6 +685,7 @@ JobInfo** plan_known_jobs_update(sched* schedule,  server_info* sinfo, time_t ti
   unsigned int found;
   int job_id=0;
   int new_jobs_counter;
+  int new_jobs_counter_remote;
   JobInfo** new_jobs;
   JobInfo* jinfo;
   plan_job* job;
@@ -697,6 +698,7 @@ JobInfo** plan_known_jobs_update(sched* schedule,  server_info* sinfo, time_t ti
   new_jobs = NULL;
   job_count = 0;
   new_jobs_counter = 0;
+  new_jobs_counter_remote = 0;
 
   job_count = sinfo->jobs.size();
 
@@ -767,6 +769,13 @@ JobInfo** plan_known_jobs_update(sched* schedule,  server_info* sinfo, time_t ti
     // jestli je job remote tak nic
     if (jinfo -> state == JobRunning && string(jinfo->job_id).find(conf.local_server) == string::npos)
     	found = 1;
+    
+    if (jinfo -> state == JobQueued && string(jinfo->job_id).find(conf.local_server) == string::npos)
+      {
+        new_jobs_counter_remote++;
+        if (new_jobs_counter_remote > 10)
+          found = 1;    
+      }
 
     if (found == 0 && new_jobs_counter < conf.new_jobs_limit_per_cycle)
       {
