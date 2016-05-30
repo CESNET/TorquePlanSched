@@ -772,9 +772,15 @@ JobInfo** plan_known_jobs_update(sched* schedule,  server_info* sinfo, time_t ti
     
     if (jinfo -> state == JobQueued && string(jinfo->job_id).find(conf.local_server) == string::npos)
       {
-        new_jobs_counter_remote++;
-        if (new_jobs_counter_remote > 10)
-          found = 1;    
+        //skip remote job array
+        if (jinfo->job_id.find('-') != std::string::npos and jinfo->job_id.find('-') < jinfo->job_id.find('.'))
+          {
+            found = 1;
+          } else {
+            new_jobs_counter_remote++;
+            if (new_jobs_counter_remote > 10)
+              found = 1;    
+          }
       }
 
     if (found == 0 && new_jobs_counter < conf.new_jobs_limit_per_cycle)
