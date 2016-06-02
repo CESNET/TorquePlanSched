@@ -446,7 +446,12 @@ int check_cluster_suitable(server_info* p_info, plan_cluster* cl, plan_job* job)
   /* re-parse nodespec */
   pars_spec *spec;
   if ((spec = parse_nodespec(node_spec)) == NULL)
+    {
+    free((char *)node_spec);
     return SCHD_ERROR;
+    }
+  
+  free((char *)node_spec);
 
   pars_prop *iter;
   iter = spec -> nodes -> properties;

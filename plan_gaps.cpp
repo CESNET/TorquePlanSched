@@ -24,7 +24,7 @@
 #include "plan_limits.h"
 #include "plan_schedule.h"
 
-plan_gap** considered_gaps;
+plan_gap** considered_gaps = NULL;
 
 
 plan_gap* gap_create()
@@ -152,6 +152,7 @@ plan_list* gap_create_not_the_last(int num_cpus, first_free_slot **first_free_sl
 
 	gap_usage++;
 
+  free(first_free_slot_availability);
   return gaps_list;
   }
 
@@ -264,6 +265,9 @@ int add_gap_to_considered(int num_considered_gaps, plan_gap* gap)
   num_considered_gaps++;
   if (num_considered_gaps == 1)
   {
+          if (considered_gaps != NULL)
+            free(considered_gaps);
+          
 	  if ((considered_gaps = (plan_gap**)malloc(num_considered_gaps*sizeof(plan_gap*))) == NULL)
 	    {
 	    perror("Memory Allocation Error");
@@ -299,6 +303,9 @@ plan_gap* find_first_gap(sched* schedule, int k, plan_job* job, bool fix_job)
   int tmp_max_ppn;
   int curr_node;
   unsigned int gap_ok;
+  
+  if (considered_gaps != NULL)
+      free(considered_gaps);
 
   considered_gaps=NULL;
   int num_considered_gaps = 0;
@@ -314,7 +321,11 @@ plan_gap* find_first_gap(sched* schedule, int k, plan_job* job, bool fix_job)
   while (list_get_next(schedule -> gaps[k]) != NULL)
     {
 	if (num_considered_gaps > 0)
-		free(considered_gaps);
+          {
+	  free(considered_gaps);
+          considered_gaps = NULL;
+          }
+        
 	num_considered_gaps = 0;
 	current_gap=(plan_gap*)schedule -> gaps[k] -> current;
 
