@@ -639,6 +639,7 @@ plan_list* update_job(plan_job* job, int num_first_free_slot, first_free_slot **
 
   free(tmp_cpu_arr);
   free(node_ppn_free);
+  free(first_free_slot_availability);
   return gaps_list;
   }
 

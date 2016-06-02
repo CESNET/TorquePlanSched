@@ -667,7 +667,11 @@ sch_resource_t job_get_scratch_local(JobInfo *jinfo)
 	  /* re-parse the nodespec */
   pars_spec *spec;
   if ((spec = parse_nodespec(node_spec)) == NULL)
+    {
+    free((char*) node_spec);
     return -1;
+    }
+  
   scratch = spec->nodes->scratch;
   
   if (spec->nodes->scratch_type == ScratchSSD)
@@ -676,6 +680,7 @@ sch_resource_t job_get_scratch_local(JobInfo *jinfo)
       scratch = -2;
 
   free_parsed_nodespec(spec);
+  free((char*) node_spec);
   return scratch;
   }
 
