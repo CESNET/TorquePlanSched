@@ -402,6 +402,7 @@ int job_create_nodespec(plan_job* job)
   node_info* planned_node;
 
   char* tmp_ns_start;
+  char* tmp_multi;
 
   int tmp_ppn;
   int tmp_ns_length;
@@ -485,7 +486,9 @@ int job_create_nodespec(plan_job* job)
 	      return 0;
 	      }
 
-        sprintf(job -> sch_nodespec, "host=%s:ppn=%d:%s", planned_node -> get_name(), num_ppn * job -> req_ppn,  multip_numbers(num_ppn,tmp_ns_start));
+            tmp_multi = multip_numbers(num_ppn,tmp_ns_start);
+            sprintf(job -> sch_nodespec, "host=%s:ppn=%d:%s", planned_node -> get_name(), num_ppn * job -> req_ppn,  tmp_multi);
+            free(tmp_multi);
 	    } else
 	    {
 	    if ((job -> sch_nodespec=(char*)realloc(job -> sch_nodespec,strlen(job -> sch_nodespec) + tmp_ns_length + 50)) == NULL)
@@ -494,7 +497,9 @@ int job_create_nodespec(plan_job* job)
 	      return 0;
 	      }
 
-	    sprintf(job -> sch_nodespec, "%s+host=%s:ppn=%d:%s",job -> sch_nodespec, planned_node -> get_name(), num_ppn * job -> req_ppn,  multip_numbers(num_ppn,tmp_ns_start));
+            tmp_multi = multip_numbers(num_ppn,tmp_ns_start);
+	    sprintf(job -> sch_nodespec, "%s+host=%s:ppn=%d:%s",job -> sch_nodespec, planned_node -> get_name(), num_ppn * job -> req_ppn,  tmp_multi);
+            free(tmp_multi);
 	    }
 
 	  planned_node = job -> ninfo_arr[i];
@@ -520,7 +525,9 @@ int job_create_nodespec(plan_job* job)
       return 0;
       }
 
-    sprintf(job -> sch_nodespec, "host=%s:ppn=%d:%s", planned_node -> get_name(), num_ppn * job -> req_ppn,  multip_numbers(num_ppn,tmp_ns_start));
+    tmp_multi = multip_numbers(num_ppn,tmp_ns_start);
+    sprintf(job -> sch_nodespec, "host=%s:ppn=%d:%s", planned_node -> get_name(), num_ppn * job -> req_ppn,  tmp_multi);
+    free(tmp_multi);
     } else
     {
     if ((job -> sch_nodespec=(char*)realloc(job -> sch_nodespec, strlen(job -> sch_nodespec) + tmp_ns_length + 50)) == NULL)
@@ -529,7 +536,9 @@ int job_create_nodespec(plan_job* job)
       return 0;
       }
 
-    sprintf(job -> sch_nodespec, "%s+host=%s:ppn=%d:%s",job -> sch_nodespec, planned_node -> get_name(), num_ppn * job -> req_ppn,  multip_numbers(num_ppn,tmp_ns_start));
+    tmp_multi = multip_numbers(num_ppn,tmp_ns_start);
+    sprintf(job -> sch_nodespec, "%s+host=%s:ppn=%d:%s",job -> sch_nodespec, planned_node -> get_name(), num_ppn * job -> req_ppn,  tmp_multi);
+    free(tmp_multi);
     }
 
   distinct_num_nodes = 0;
