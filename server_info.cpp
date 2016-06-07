@@ -204,37 +204,28 @@ server_info *query_server(int pbs_sd)
   int j;
   for (i=0; i < sinfo -> num_nodes; i++)
     {
-  	sinfo->nodes[i]->jobs_on_cpu=NULL;
+    sinfo->nodes[i]->jobs_on_cpu=NULL;
 
-  	if (!sinfo -> nodes[i] -> has_jobs()) continue;
+    if (!sinfo -> nodes[i] -> has_jobs())
+      continue;
 
-  	if ((sinfo->nodes[i]->jobs_on_cpu = (JobInfo**) malloc(sinfo->nodes[i]->get_cores_total() * sizeof(JobInfo*))) == NULL)
+    if ((sinfo->nodes[i]->jobs_on_cpu = (JobInfo**) malloc(sinfo->nodes[i]->get_cores_total() * sizeof(JobInfo*))) == NULL)
       {
       free_server(sinfo, 1);
       perror("Memory allocation error");
       return NULL;
       }
 
-  	for (j=0; j<sinfo->nodes[i]->get_cores_total();j++)
-  	  sinfo->nodes[i]->jobs_on_cpu[j]=NULL;
+    for (j=0; j<sinfo->nodes[i]->get_cores_total();j++)
+      sinfo->nodes[i]->jobs_on_cpu[j]=NULL;
 
-  	/*
-  	std::set<std::string> jobs = sinfo -> nodes[i]->get_jobs();
-  	for (int i = 0; i < jobs.size(); i++)
-     	if (assign_jobs_on_cpu(sinfo->nodes[i]->jobs_on_cpu, jobs[i].c_str(), sinfo -> scheduled_jobs) == -1)
-  	        log_server_jobs(sinfo);*/
-
-  	std::set<std::string>::const_iterator it;
-  	std::set<std::string> jobs = sinfo -> nodes[i]->get_jobs();
-    for (it = jobs.begin(); it != jobs.end(); it++) {
-       	  if (assign_jobs_on_cpu(sinfo->nodes[i]->jobs_on_cpu, (*it).c_str(), sinfo -> scheduled_jobs) == -1)
-    	    log_server_jobs(sinfo);
+    std::set<std::string>::const_iterator it;
+    std::set<std::string> jobs = sinfo -> nodes[i]->get_jobs();
+    for (it = jobs.begin(); it != jobs.end(); it++) 
+      {
+      if (assign_jobs_on_cpu(sinfo->nodes[i]->jobs_on_cpu, (*it).c_str(), sinfo -> scheduled_jobs) == -1)
+        log_server_jobs(sinfo);
       }
-
-/*  	  j = 0;
-  	while(sinfo -> nodes[i] -> jobs[j] != NULL)
-  	  if (assign_jobs_on_cpu(sinfo->nodes[i]->jobs_on_cpu, sinfo -> nodes[i] -> jobs[j++], sinfo -> scheduled_jobs) == -1)
-  	    log_server_jobs(sinfo);*/
     }
 
   pbs_statfree(server);

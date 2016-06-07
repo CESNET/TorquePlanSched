@@ -209,7 +209,11 @@ void free_nodes(node_info **ninfo_arr)
   if (ninfo_arr != NULL)
     {
     for (i = 0; ninfo_arr[i] != NULL; i++)
+      {
+      if (ninfo_arr[i]->jobs_on_cpu != NULL)
+        free(ninfo_arr[i]->jobs_on_cpu);
       delete ninfo_arr[i];
+      }
 
     free(ninfo_arr);
     }
