@@ -32,12 +32,13 @@
 bool job_backup_fixnodes(plan_job* job)
   {
   if (job -> fixed_nname_arr == NULL )
-	  return false;
+    return false;
 
   if (job -> fixed_nname_arr_backup != NULL )
-	  for (int i=0; i< job->req_num_nodes; i++)
-	       if (job->fixed_nname_arr_backup[i]!= NULL)
-	      	  free(job->fixed_nname_arr_backup[i]);
+    for (int i=0; i< job->req_num_nodes; i++)
+      if (job->fixed_nname_arr_backup[i]!= NULL)
+        free(job->fixed_nname_arr_backup[i]);
+    
   free(job -> fixed_nname_arr_backup);
 
   if ((job -> fixed_nname_arr_backup = (char**)malloc(job -> req_num_nodes*sizeof(char*))) == NULL)
@@ -48,19 +49,25 @@ bool job_backup_fixnodes(plan_job* job)
 
   for (int i = 0; i < job -> req_num_nodes; i++)
     {
-	if (job -> fixed_nname_arr[i] != NULL ){
-	  job -> fixed_nname_arr_backup[i] = strdup(job -> fixed_nname_arr[i]);
-	  free(job -> fixed_nname_arr[i]);
-	  job -> fixed_nname_arr[i] = NULL;
-	} else {
-	  //if (job -> fixed_nname_arr_backup[i]!= NULL)
-		//  free(job -> fixed_nname_arr_backup[i]);
-	  job -> fixed_nname_arr_backup[i] =  NULL;
-	}
+    if (job -> fixed_nname_arr[i] != NULL )
+      {
+      job -> fixed_nname_arr_backup[i] = strdup(job -> fixed_nname_arr[i]);
+      free(job -> fixed_nname_arr[i]);
+      job -> fixed_nname_arr[i] = NULL;
+      }
+    else
+      {
+      //if (job -> fixed_nname_arr_backup[i]!= NULL)
+      //free(job -> fixed_nname_arr_backup[i]);
+      job -> fixed_nname_arr_backup[i] =  NULL;
+      }
+    
     if (job -> fixed_nname_arr[i] != NULL)
-    	free(job -> fixed_nname_arr[i]);
-	job -> fixed_nname_arr[i] = NULL;
+      free(job -> fixed_nname_arr[i]);
+    
+    job -> fixed_nname_arr[i] = NULL;
     }
+  
   return true;
   }
 
@@ -68,13 +75,16 @@ bool job_restore_fixnodes(plan_job* job)
   {
   if (job -> fixed_nname_arr_backup != NULL)
     {
-	for (int i=0; i< job->req_num_nodes; i++)
-	  if (job->fixed_nname_arr[i]!= NULL)
-	    free(job->fixed_nname_arr[i]);
+    for (int i=0; i< job->req_num_nodes; i++)
+      if (job->fixed_nname_arr[i]!= NULL)
+        free(job->fixed_nname_arr[i]);
+    
     free(job -> fixed_nname_arr);
     job -> fixed_nname_arr = job -> fixed_nname_arr_backup;
     job -> fixed_nname_arr_backup = NULL;
-    } else return false;
+    }
+  else
+    return false;
 
   return true;
   }
@@ -86,17 +96,17 @@ void job_free_fixnodes_backup(sched* schedule, int k)
   schedule->jobs[k] -> current = NULL;
   for (int i = 0; i < schedule -> jobs[k] -> num_items; i++)
     {
-	list_get_next(schedule -> jobs[k]);
-	job = (plan_job*)schedule -> jobs[k] -> current;
+    list_get_next(schedule -> jobs[k]);
+    job = (plan_job*)schedule -> jobs[k] -> current;
 
-	if (job -> fixed_nname_arr_backup != NULL)
-	   {
-		for (int i=0; i< job->req_num_nodes; i++)
-			  if (job->fixed_nname_arr_backup[i]!= NULL)
-			    free(job->fixed_nname_arr_backup[i]);
-	   free(job -> fixed_nname_arr_backup);
-	   job -> fixed_nname_arr_backup = NULL;
-	   }
+    if (job -> fixed_nname_arr_backup != NULL)
+      {
+      for (int i=0; i< job->req_num_nodes; i++)
+        if (job->fixed_nname_arr_backup[i]!= NULL)
+          free(job->fixed_nname_arr_backup[i]);
+      free(job -> fixed_nname_arr_backup);
+      job -> fixed_nname_arr_backup = NULL;
+      }
     }
   }
 
@@ -116,7 +126,7 @@ plan_job** backup_job_order(sched* schedule, int k)
   schedule -> jobs[k] -> current = NULL;
   for (int i = 0; i < schedule -> jobs[k] -> num_items; i++)
     {
-	list_get_next(schedule -> jobs[k]);
+    list_get_next(schedule -> jobs[k]);
     backup[i] = (plan_job*)schedule -> jobs[k] -> current;
     }
 
@@ -140,7 +150,7 @@ int restore_job_order(sched* schedule, int k, plan_job** backup)
   i = 0;
   while (backup[i] != NULL)
     {
-	item = (void*)backup[i];
+    item = (void*)backup[i];
 
     if (i == 0)
       {
@@ -150,7 +160,8 @@ int restore_job_order(sched* schedule, int k, plan_job** backup)
       set_predeccessor(item, NULL, Jobs);
       set_successor(item, NULL, Jobs);
 
-      } else
+      }
+    else
       {
       set_successor(schedule -> jobs[k] -> last, item, Jobs);
       set_predeccessor(item, schedule -> jobs[k] -> last, Jobs);
@@ -166,7 +177,6 @@ int restore_job_order(sched* schedule, int k, plan_job** backup)
     schedule -> jobs[k] -> num_items++;
     }
 
-  free(backup);
   return schedule -> jobs[k] -> num_items;
   }
 
@@ -186,7 +196,7 @@ int random_job_to_random_position(sched* schedule, int k, time_t time)
 
   do
     {
-	job = (plan_job*)list_get_random_item(schedule -> jobs[k], conf.optim_minimal_queued);
+    job = (plan_job*)list_get_random_item(schedule -> jobs[k], conf.optim_minimal_queued);
     }
   while (job == NULL || job -> jinfo -> state != JobQueued);
 
@@ -197,27 +207,28 @@ int random_job_to_random_position(sched* schedule, int k, time_t time)
   list_remove_item(schedule -> jobs[k], (void*) job, 0);
 
   if (update_sched(schedule, k, time)==2)
-      update_sched(schedule, k, time);
+    update_sched(schedule, k, time);
 
   job_tmp = NULL;
 
   do
     {
-	  //jobs_count_limit se musi o jedno snizit ale nesmi se dostat pod 2
-	  job_tmp = (plan_job*)list_get_random_item(schedule -> jobs[k], conf.optim_minimal_queued-1);
+    //jobs_count_limit se musi o jedno snizit ale nesmi se dostat pod 2
+    job_tmp = (plan_job*)list_get_random_item(schedule -> jobs[k], conf.optim_minimal_queued-1);
     }
   while (job_tmp == predeccessor);
 
   if (job_tmp != NULL)
     {
     list_add_inbackof(schedule -> jobs[k], (void*) job_tmp, (void*) job);
-    }else
+    }
+  else
     {
     list_add_begin(schedule -> jobs[k],(void*) job);
     }
 
   if (update_sched(schedule, k, time)==2)
-      update_sched(schedule, k, time);
+    update_sched(schedule, k, time);
 
   return 0;
   }
@@ -235,16 +246,16 @@ int random_job_to_first_gap(sched* schedule, int k, time_t time)
 
   do
     {
-	job = (plan_job*)list_get_random_item(schedule -> jobs[k], conf.optim_minimal_queued);
+    job = (plan_job*)list_get_random_item(schedule -> jobs[k], conf.optim_minimal_queued);
     }
-    while (job == NULL || job -> jinfo->state != JobQueued);
+  while (job == NULL || job -> jinfo->state != JobQueued);
 
   job_backup_fixnodes(job);
 
   list_remove_item(schedule -> jobs[k], (void*) job, 0);
 
   if (update_sched(schedule, k, time)==2)
-      update_sched(schedule, k, time);
+    update_sched(schedule, k, time);
 
   gap = find_first_gap(schedule, k, job, true);
 
@@ -254,7 +265,7 @@ int random_job_to_first_gap(sched* schedule, int k, time_t time)
   job_put_in_gap(schedule, k, job, gap);
 
   if (update_sched(schedule, k, time)==2)
-      update_sched(schedule, k, time);
+    update_sched(schedule, k, time);
 
   return 0;
   }
@@ -292,122 +303,126 @@ int plan_optimization(sched* schedule, time_t time_now)
   num_queued = 0;
 
   for (cl_number = 0; cl_number < schedule -> num_clusters; cl_number++)
-	  num_queued += schedule -> clusters[cl_number] -> num_queued_jobs;
+    num_queued += schedule -> clusters[cl_number] -> num_queued_jobs;
 
   optim_cycles = 30;
   optim_duration = 20;
           
-  if (optim_cycles == 0) {
-	evaluation_before = evaluate_schedule(schedule);
+  if (optim_cycles == 0)
+    {
+    evaluation_before = evaluate_schedule(schedule);
     return 0;
-  }
+    }
 
 
   sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "evaluation", "number of queued jobs: %i cycles limit: %i duration limit %i",
-		  num_queued,
-		  optim_cycles,
-		  optim_duration);
+          num_queued,
+          optim_cycles,
+          optim_duration);
 
   gettimeofday(&tv_start, NULL); 
   evaluation_before = evaluate_schedule(schedule);
 
   optim_duration += time(0);
 
-  for (int i = 0; i < optim_cycles; i++) {
-    for (cl_number = 0; cl_number < schedule->num_clusters; cl_number++) {
-        sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "evaluation", "cluster %d:", cl_number);
-        if (schedule -> clusters[cl_number] -> num_queued_jobs < conf.optim_minimal_queued) {
-            sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "evaluation", "not enough queued jobs on cluster %d", cl_number);
-            continue;
+  for (int i = 0; i < optim_cycles; i++)
+    {
+    for (cl_number = 0; cl_number < schedule->num_clusters; cl_number++)
+      {
+      sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "evaluation", "cluster %d:", cl_number);
+      if (schedule -> clusters[cl_number] -> num_queued_jobs < conf.optim_minimal_queued)
+        {
+        sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "evaluation", "not enough queued jobs on cluster %d", cl_number);
+        continue;
         }
 
-        if (optim_duration < time(0)) {
-            sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "evaluation", "optimization time is up");
-            i = optim_cycles;
-            continue;
+      if (optim_duration < time(0))
+        {
+        sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "evaluation", "optimization time is up");
+        i = optim_cycles;
+        continue;
         }
 
-	backup = backup_job_order(schedule,cl_number);
+      backup = backup_job_order(schedule,cl_number);
 
-	//res = random_job_to_first_gap(pbs_sd, schedule, cl_number,time_now);
-	res = random_job_to_random_position(schedule, cl_number,time_now);
+      //res = random_job_to_first_gap(pbs_sd, schedule, cl_number,time_now);
+      res = random_job_to_random_position(schedule, cl_number,time_now);
 
-	if (res == 0) {
-            num_attempts++;
-            evaluation_after = evaluate_schedule(schedule);
+      if (res == 0) 
+        {
+        num_attempts++;
+        evaluation_after = evaluate_schedule(schedule);
 
-            weight_slowdown = (1.0 * (evaluation_before.slowdown - evaluation_after.slowdown)) / evaluation_before.slowdown;
+        weight_slowdown = (1.0 * (evaluation_before.slowdown - evaluation_after.slowdown)) / evaluation_before.slowdown;
 
-            weight_wait_time = (1.0 * (evaluation_before.wait_time - evaluation_after.wait_time)) / evaluation_before.wait_time;
+        weight_wait_time = (1.0 * (evaluation_before.wait_time - evaluation_after.wait_time)) / evaluation_before.wait_time;
 
-            weight_response_time = (0.0 * (evaluation_before.response_time - evaluation_after.response_time)) / evaluation_before.response_time;
+        weight_response_time = (0.0 * (evaluation_before.response_time - evaluation_after.response_time)) / evaluation_before.response_time;
 
-            weight_fairness = (10.0 * (evaluation_before.fairness - evaluation_after.fairness)) / evaluation_before.fairness;
+        weight_fairness = (10.0 * (evaluation_before.fairness - evaluation_after.fairness)) / evaluation_before.fairness;
             
-            if (weight_slowdown + weight_wait_time + weight_response_time + weight_fairness > 0) {
-                num_success++;
+        if (weight_slowdown + weight_wait_time + weight_response_time + weight_fairness > 0) 
+          {
+          num_success++;
 
-                sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "evaluation", "success on cluster %d number of queued jobs: %d, slowdown: %f %, wait_time: %f %, response_time: %f %, fairness: %f %",
-        		  cl_number,
-        		  schedule -> clusters[cl_number] -> num_queued_jobs,
-        	        (1.0 - ((evaluation_before.slowdown * 1.0) / (evaluation_after.slowdown * 1.0))) * 100,
-        	        (1.0 - ((evaluation_before.wait_time * 1.0) / (evaluation_after.wait_time * 1.0))) * 100,
-        	        (1.0 - ((evaluation_before.response_time * 1.0) / (evaluation_after.response_time * 1.0))) * 100,
-        	        (1.0 - ((evaluation_before.fairness * 1.0) / (evaluation_after.fairness * 1.0))) * 100
-        	        );
+          sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "evaluation", "success on cluster %d number of queued jobs: %d, slowdown: %f %, wait_time: %f %, response_time: %f %, fairness: %f %",
+                    cl_number,
+                    schedule -> clusters[cl_number] -> num_queued_jobs,
+                    (1.0 - ((evaluation_before.slowdown * 1.0) / (evaluation_after.slowdown * 1.0))) * 100,
+                    (1.0 - ((evaluation_before.wait_time * 1.0) / (evaluation_after.wait_time * 1.0))) * 100,
+                    (1.0 - ((evaluation_before.response_time * 1.0) / (evaluation_after.response_time * 1.0))) * 100,
+                    (1.0 - ((evaluation_before.fairness * 1.0) / (evaluation_after.fairness * 1.0))) * 100
+                    );
+          sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "evaluation", "success on cluster %d number of queued jobs: %d, slowdown; before: %f after: %f",
+                    cl_number,
+                    schedule -> clusters[cl_number] -> num_queued_jobs,
+                    evaluation_before.slowdown, evaluation_after.slowdown
+                    );        
           
-                sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "evaluation", "success on cluster %d number of queued jobs: %d, slowdown; before: %f after: %f",
-        		  cl_number,
-        		  schedule -> clusters[cl_number] -> num_queued_jobs,
-        	          evaluation_before.slowdown, evaluation_after.slowdown
-        	        );        
+          sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "evaluation", "success on cluster %d number of queued jobs: %d, wait_time; before: %f after: %f",
+                    cl_number,
+                    schedule -> clusters[cl_number] -> num_queued_jobs,
+                    evaluation_before.wait_time, evaluation_after.wait_time
+                    );      
+
+
+          sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "evaluation", "success on cluster %d number of queued jobs: %d, response_time; before: %f after: %f",
+                    cl_number,
+                    schedule -> clusters[cl_number] -> num_queued_jobs,
+                    evaluation_before.response_time, evaluation_after.response_time
+                    );         
           
-                sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "evaluation", "success on cluster %d number of queued jobs: %d, wait_time; before: %f after: %f",
-        		  cl_number,
-        		  schedule -> clusters[cl_number] -> num_queued_jobs,
-        	          evaluation_before.wait_time, evaluation_after.wait_time
-        	        );      
+          sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "evaluation", "success on cluster %d number of queued jobs: %d, fairness; before: %f after: %f",
+                    cl_number,
+                    schedule -> clusters[cl_number] -> num_queued_jobs,
+                    evaluation_before.fairness, evaluation_after.fairness
+                    );           
 
+          evaluation_before = evaluation_after;
 
-                sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "evaluation", "success on cluster %d number of queued jobs: %d, response_time; before: %f after: %f",
-        		  cl_number,
-        		  schedule -> clusters[cl_number] -> num_queued_jobs,
-        	          evaluation_before.response_time, evaluation_after.response_time
-        	        );         
-          
-                sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "evaluation", "success on cluster %d number of queued jobs: %d, fairness; before: %f after: %f",
-        		  cl_number,
-        		  schedule -> clusters[cl_number] -> num_queued_jobs,
-        	          evaluation_before.fairness, evaluation_after.fairness
-        	        );           
-
-                evaluation_before = evaluation_after;
-
-                free (backup);
-
-                job_free_fixnodes_backup(schedule, cl_number);
-            } else {
-                restore_job_order(schedule, cl_number, backup);
-                job_free_fixnodes_backup(schedule, cl_number);
-                update_sched(schedule, cl_number, time_now);
-                evaluation_after = evaluate_schedule(schedule);
+          job_free_fixnodes_backup(schedule, cl_number);
+          }
+        else
+          {
+          restore_job_order(schedule, cl_number, backup);
+          job_free_fixnodes_backup(schedule, cl_number);
+          update_sched(schedule, cl_number, time_now);
+          evaluation_after = evaluate_schedule(schedule);
                 
-               
-
-
-
-                if (evaluation_before.response_time != evaluation_after.response_time ||
-	          evaluation_before.wait_time != evaluation_after.wait_time ||
-	          evaluation_before.slowdown != evaluation_after.slowdown)
-                    sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "Optimization Error", "BACKUP FAILED");
-	    }
-	} else {
-            restore_job_order(schedule, cl_number, backup);
+          if (evaluation_before.response_time != evaluation_after.response_time ||
+              evaluation_before.wait_time != evaluation_after.wait_time ||
+	      evaluation_before.slowdown != evaluation_after.slowdown)
+            sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "Optimization Error", "BACKUP FAILED");
+	  }
+	}
+      else
+        {
+        restore_job_order(schedule, cl_number, backup);
         }
         
-        //free (backup);
-    }
-  }
+      free(backup);
+      } // cluster loop
+    } // main optimization loop
 
    gettimeofday(&tv_step1, NULL); 
    step_time = (tv_step1.tv_sec * 1e6 + tv_step1.tv_usec) - (tv_start.tv_sec * 1e6 + tv_start.tv_usec);
