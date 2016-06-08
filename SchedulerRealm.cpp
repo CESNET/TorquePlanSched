@@ -651,10 +651,9 @@ int World::try_run_plan(sched* schedule, time_t time_now)
           DIS_tcp_settimeout(p_info->job_start_timeout+30); /* add a generous 30 seconds communication overhead */
           
           ret = pbs_runjob(socket, const_cast<char*>(jinfo->job_id.c_str()), best_node_name, NULL);
-	  //ret = pbs_runjob(socket, (char*)jinfo->job_id.c_str(), best_node_name, NULL);
           }
-        
-	job -> sch_nodespec = NULL;
+
+        free(best_node_name);
 
         double final_fairshare = minspec * jinfo->queue->queue_cost * jinfo->calculated_fairshare;
 	update_job_fairshare(socket, jinfo, final_fairshare);

@@ -519,7 +519,7 @@ int job_create_nodespec(plan_job* job)
 
   if (job -> sch_nodespec == NULL)
     {
-	if ((job -> sch_nodespec = (char*)malloc(tmp_ns_length + 50)) == NULL)
+    if ((job -> sch_nodespec = (char*)malloc(tmp_ns_length + 50)) == NULL)
       {
       perror("Memory Allocation Error");
       return 0;
@@ -528,7 +528,8 @@ int job_create_nodespec(plan_job* job)
     tmp_multi = multip_numbers(num_ppn,tmp_ns_start);
     sprintf(job -> sch_nodespec, "host=%s:ppn=%d:%s", planned_node -> get_name(), num_ppn * job -> req_ppn,  tmp_multi);
     free(tmp_multi);
-    } else
+    }
+  else
     {
     if ((job -> sch_nodespec=(char*)realloc(job -> sch_nodespec, strlen(job -> sch_nodespec) + tmp_ns_length + 50)) == NULL)
       {
@@ -572,9 +573,11 @@ int job_create_nodespec(plan_job* job)
     sprintf(job -> sch_nodespec, "%s%s",job -> sch_nodespec, "#excl");
   }
 
-  //free(job -> jinfo -> nodespec);
   job -> jinfo -> nodespec = job -> sch_nodespec;
   sched_log(PBSEVENT_SCHED, PBS_EVENTCLASS_JOB, "sch_nodespec", "job: %s spec: %s",job -> jinfo->job_id.c_str(),job->sch_nodespec);
+  
+  free(job -> sch_nodespec);
+  job -> sch_nodespec = NULL;
 
   return distinct_num_nodes;
   }
