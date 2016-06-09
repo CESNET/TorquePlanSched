@@ -128,7 +128,7 @@ public:
   {
     p_hosted.reserve(2);
   }
-  ~node_info() { free_bootable_alternatives(alternatives); }
+  ~node_info() { free(cluster_name); free_bootable_alternatives(alternatives); }
 
   node_info(const node_info& src) : NodeLogic(src), JobAssign(src), magrathea_status(src.magrathea_status), alternatives(NULL),
                                     p_is_notusable(src.p_is_notusable), p_is_rebootable(src.p_is_rebootable), p_is_building_cluster(src.p_is_building_cluster),
