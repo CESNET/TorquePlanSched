@@ -111,9 +111,9 @@ plan_eval* evaluation_add_job(plan_eval* evaluation, plan_job* job, bool jobfini
   double wait_time;
 
   if (jobfinished)
-	completion_time = job -> jinfo -> compl_time;
+    completion_time = job -> jinfo -> compl_time;
   else
-	completion_time = job -> completion_time;
+    completion_time = job -> completion_time;
 
   if (evaluation -> start_time == 0 || evaluation -> start_time > job -> start_time)
     evaluation -> start_time = job -> start_time;
@@ -155,18 +155,18 @@ plan_eval evaluate_schedule(sched* schedule)
 
   for (cl_number = 0; cl_number < schedule -> num_clusters; cl_number++)
     {
-	last_gap = (plan_gap*) schedule -> gaps[cl_number] -> last;
+    last_gap = (plan_gap*) schedule -> gaps[cl_number] -> last;
 
-	res.end_time = last_gap -> start_time;
+    res.end_time = last_gap -> start_time;
 
-	schedule -> jobs[cl_number] -> current = NULL;
-	while (list_get_next(schedule -> jobs[cl_number]) != NULL)
-	  {
-	  job = (plan_job*) schedule -> jobs[cl_number] -> current;
+    schedule -> jobs[cl_number] -> current = NULL;
+    while (list_get_next(schedule -> jobs[cl_number]) != NULL)
+      {
+      job = (plan_job*) schedule -> jobs[cl_number] -> current;
 
-	  if (job -> jinfo -> state == JobQueued)
-		evaluation_add_job(&res, job, false);
-	  }
+      if (job -> jinfo -> state == JobQueued)
+        evaluation_add_job(&res, job, false);
+      }
     }
 
   fairshare_get_planned_from_schedule(schedule);
@@ -180,23 +180,23 @@ plan_eval evaluate_schedule(sched* schedule)
 
 void evaluation_log(plan_eval* evaluation, const char* evaluation_description)
   {
-    char buffer_start[30];
-    char buffer_end[30];
+  char buffer_start[30];
+  char buffer_end[30];
 
-    if (evaluation -> num_jobs > 0) {
+  if (evaluation -> num_jobs > 0)
+    {
+    strftime(buffer_start, 30, "%Y:%m:%d %H:%M:%S", localtime(&evaluation -> start_time));
+    strftime(buffer_end, 30, "%Y:%m:%d %H:%M:%S", localtime(&evaluation -> end_time));
 
-      strftime(buffer_start, 30, "%Y:%m:%d %H:%M:%S", localtime(&evaluation -> start_time));
-      strftime(buffer_end, 30, "%Y:%m:%d %H:%M:%S", localtime(&evaluation -> end_time));
-
-	  sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "evaluation", "%s, number of jobs: %d, RT: %f, WT: %f, SD: %f, Fair: %f, start time: %s, end time: %s, makespan: %i",
-			evaluation_description,
-			evaluation -> num_jobs,
-			evaluation -> response_time,
-			evaluation -> wait_time,
-			evaluation -> slowdown,
-			evaluation -> fairness,
-			buffer_start,
-			buffer_end,
-			evaluation->end_time - evaluation->start_time);
+    sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "evaluation", "%s, number of jobs: %d, RT: %f, WT: %f, SD: %f, Fair: %f, start time: %s, end time: %s, makespan: %i",
+                evaluation_description,
+                evaluation -> num_jobs,
+                evaluation -> response_time,
+                evaluation -> wait_time,
+                evaluation -> slowdown,
+                evaluation -> fairness,
+                buffer_start,
+                buffer_end,
+                evaluation->end_time - evaluation->start_time);
     }
   }

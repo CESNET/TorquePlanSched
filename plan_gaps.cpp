@@ -87,7 +87,7 @@ int gaps_ith_smallest(first_free_slot **first_free_slots, int num_ffs, int *ffs_
     }
 
   if (result != -1)
-	  ffs_availability[result] = 1;
+    ffs_availability[result] = 1;
 
   return result;
   }
@@ -105,13 +105,14 @@ plan_list* gap_create_not_the_last(int num_cpus, first_free_slot **first_free_sl
   first_free_slot_availability = (int*) malloc(num_cpus * sizeof(int));
 
   for (int i = 0; i < num_cpus; i++)
-	if (first_free_slots[i] -> time == -1)
-	  {
-	  first_free_slot_availability[i] = 1;
-	  }else
-	  {
-	  first_free_slot_availability[i] = 0;
-	  }
+    if (first_free_slots[i] -> time == -1)
+      {
+      first_free_slot_availability[i] = 1;
+      }
+    else
+      {
+      first_free_slot_availability[i] = 0;
+      }
 
   gaps_list = list_create(Gaps);
 
@@ -120,37 +121,37 @@ plan_list* gap_create_not_the_last(int num_cpus, first_free_slot **first_free_sl
 
   for (int i = 0; i < num_cpus; i++)
     {
-	cpu_index = gaps_ith_smallest(first_free_slots, num_cpus, first_free_slot_availability);
+    cpu_index = gaps_ith_smallest(first_free_slots, num_cpus, first_free_slot_availability);
 
-	if (cpu_index == -1)
-	  continue;
+    if (cpu_index == -1)
+      continue;
 
-	if (gap_start == -1)
-	  {
-	  gap_start = first_free_slots[cpu_index] -> time;
-	  }
+    if (gap_start == -1)
+      {
+      gap_start = first_free_slots[cpu_index] -> time;
+      }
 
     if (gap_start != first_free_slots[cpu_index] -> time)
-	  {
-	  gap_end = first_free_slots[cpu_index] -> time;
+      {
+      gap_end = first_free_slots[cpu_index] -> time;
 
-	  if (gap_end > max_completion_time)
-	    {
-		gap_end = max_completion_time;
-	    }
+      if (gap_end > max_completion_time)
+        {
+        gap_end = max_completion_time;
+        }
 
 	  //create gap
-	  if (gap_end > gap_start)
+      if (gap_end > gap_start)
         {
-	    new_gap = (plan_gap*) list_add_end(gaps_list, gap_fillin((plan_gap*)NULL, gap_start, gap_end, gap_end - gap_start, gap_usage, (plan_job*)NULL, (plan_gap*)NULL, (plan_gap*)NULL));
-	    new_gap -> nodes_memory = gap_memory_create_last(new_gap, num_cpus, first_free_slots);
-	    }
+        new_gap = (plan_gap*) list_add_end(gaps_list, gap_fillin((plan_gap*)NULL, gap_start, gap_end, gap_end - gap_start, gap_usage, (plan_job*)NULL, (plan_gap*)NULL, (plan_gap*)NULL));
+        new_gap -> nodes_memory = gap_memory_create_last(new_gap, num_cpus, first_free_slots);
+        }
 
-	  gap_start = first_free_slots[cpu_index] -> time;
-	  }
-	}
+      gap_start = first_free_slots[cpu_index] -> time;
+      }
+    }
 
-	gap_usage++;
+  gap_usage++;
 
   free(first_free_slot_availability);
   return gaps_list;
@@ -182,7 +183,8 @@ void* gap_create_last(time_t start_time, plan_cluster* cluster_k)
   if (cluster_k == NULL)
     {
     gap -> usage = 0;
-    } else
+    }
+  else
     {
     gap -> usage = cluster_k -> num_running_cpus;
 
@@ -222,7 +224,8 @@ void* gap_create_last(time_t start_time, plan_cluster* cluster_k)
       {
       free(gap -> nodes_memory);
       gap -> nodes_memory = NULL;
-      } else
+      }
+    else
       {
       if ((gap -> nodes_memory = (plan_gap_mem**)realloc(gap -> nodes_memory, gap -> num_nodes * sizeof(plan_gap_mem*))) == NULL)
         {
@@ -243,19 +246,19 @@ int check_node_in_gap(plan_gap* gap, node_info* ninfo, int req_usage, sch_resour
 
   i = 0;
   while (i < gap -> num_nodes && gap -> nodes_memory[i] -> ninfo != ninfo)
-  	i++;
+    i++;
 
   //uzel v dire neni
   if (i == gap -> num_nodes)
-	return 0;
+    return 0;
 
   res = gap -> nodes_memory[i] -> num_cpus / req_usage;
 
   if (req_mem > 0 && res > gap -> nodes_memory[i] -> available_mem / req_mem)
-	res = gap -> nodes_memory[i] -> available_mem / req_mem;
+    res = gap -> nodes_memory[i] -> available_mem / req_mem;
 
   if (req_scratch_local > 0 && res > gap -> nodes_memory[i] -> available_scratch_local / req_scratch_local)
-	res = gap -> nodes_memory[i] -> available_scratch_local / req_scratch_local;
+    res = gap -> nodes_memory[i] -> available_scratch_local / req_scratch_local;
 
   return res;
   }
@@ -264,23 +267,24 @@ int add_gap_to_considered(int num_considered_gaps, plan_gap* gap)
   {
   num_considered_gaps++;
   if (num_considered_gaps == 1)
-  {
-          if (considered_gaps != NULL)
-            free(considered_gaps);
+    {
+    if (considered_gaps != NULL)
+      free(considered_gaps);
           
-	  if ((considered_gaps = (plan_gap**)malloc(num_considered_gaps*sizeof(plan_gap*))) == NULL)
-	    {
-	    perror("Memory Allocation Error");
-	    return 0;
-	    }
-  } else
-  {
-	  if ((considered_gaps = (plan_gap**)realloc(considered_gaps,num_considered_gaps*sizeof(plan_gap*))) == NULL)
-	    {
-	    perror("Memory Allocation Error");
-	    return 0;
-	    }
-  }
+    if ((considered_gaps = (plan_gap**)malloc(num_considered_gaps*sizeof(plan_gap*))) == NULL)
+      {
+      perror("Memory Allocation Error");
+      return 0;
+      }
+    }
+  else
+    {
+    if ((considered_gaps = (plan_gap**)realloc(considered_gaps,num_considered_gaps*sizeof(plan_gap*))) == NULL)
+      {
+      perror("Memory Allocation Error");
+      return 0;
+      }
+    }
   considered_gaps[num_considered_gaps-1]=gap;
 
   return num_considered_gaps;
@@ -290,8 +294,8 @@ int check_considered_gaps(int num_considered_gaps, plan_job* job, sched* schedul
   {
   update_limits_values(schedule, k);
   for (int i=0; i<num_considered_gaps; i++)
-	  if (!limits_is_gap_ok(schedule -> limits[k], job, considered_gaps[i], schedule->clusters[k]))
-	  	  return 0;
+    if (!limits_is_gap_ok(schedule -> limits[k], job, considered_gaps[i], schedule->clusters[k]))
+      return 0;
 
   return 1;
   }
@@ -305,7 +309,7 @@ plan_gap* find_first_gap(sched* schedule, int k, plan_job* job, bool fix_job)
   unsigned int gap_ok;
   
   if (considered_gaps != NULL)
-      free(considered_gaps);
+    free(considered_gaps);
 
   considered_gaps=NULL;
   int num_considered_gaps = 0;
@@ -320,46 +324,46 @@ plan_gap* find_first_gap(sched* schedule, int k, plan_job* job, bool fix_job)
     schedule -> gaps[k] -> current = NULL;
   while (list_get_next(schedule -> gaps[k]) != NULL)
     {
-	if (num_considered_gaps > 0)
-          {
-	  free(considered_gaps);
-          considered_gaps = NULL;
-          }
+    if (num_considered_gaps > 0)
+      {
+      free(considered_gaps);
+      considered_gaps = NULL;
+      }
         
-	num_considered_gaps = 0;
-	current_gap=(plan_gap*)schedule -> gaps[k] -> current;
+    num_considered_gaps = 0;
+    current_gap=(plan_gap*)schedule -> gaps[k] -> current;
 
-	if (current_gap -> usage < job -> usage)
-	  continue;
+    if (current_gap -> usage < job -> usage)
+      continue;
 
     for (int j = 0; j < job -> req_num_nodes; j++)
-    	if (job -> fixed_nname_arr[j] != NULL)
-    	  {
-    	  free(job -> fixed_nname_arr[j]);
-    	  job -> fixed_nname_arr[j] = NULL;
-    	  }
+      if (job -> fixed_nname_arr[j] != NULL)
+        {
+        free(job -> fixed_nname_arr[j]);
+        job -> fixed_nname_arr[j] = NULL;
+        }
 
-	plan_num_nodes = 0;
-	tmp_max_nodes_ppn = 0;
+    plan_num_nodes = 0;
+    tmp_max_nodes_ppn = 0;
 
-	curr_node = 0;
-	while (curr_node < current_gap -> num_nodes)
-	  {
+    curr_node = 0;
+    while (curr_node < current_gap -> num_nodes)
+      {
 		/*
       if (job->jinfo->is_exclusive && current_gap ->nodes_memory[curr_node]->ninfo->get_cores_total() >= job->req_ppn){
     	 job->original_req_ppn = job->req_ppn;
     	 job->req_ppn=current_gap -> nodes_memory[curr_node]->ninfo->get_cores_total();
          }
-*/
-	  while (curr_node < current_gap -> num_nodes &&
-			((current_gap -> nodes_memory[curr_node]->ninfo ->is_down() ||  current_gap -> nodes_memory[curr_node]->ninfo ->is_offline() || current_gap -> nodes_memory[curr_node]->ninfo ->is_notusable())||
-		     (current_gap -> nodes_memory[curr_node]->ninfo->get_avail_before() != 0 && current_gap -> nodes_memory[curr_node]->ninfo->get_avail_before() < (current_gap->start_time + job ->estimated_processing))||
-			 current_gap -> nodes_memory[curr_node] -> num_cpus < job -> req_ppn ||
-		     current_gap -> nodes_memory[curr_node] -> available_mem < job -> req_mem ||
-			 (current_gap -> nodes_memory[curr_node] -> available_scratch_local > -1 && current_gap -> nodes_memory[curr_node] -> available_scratch_local < job -> req_scratch_local ) ||
-			 (get_walltime_limit_min(current_gap -> nodes_memory[curr_node]->ninfo->get_phys_prop()) != 0 && get_walltime_limit_min(current_gap -> nodes_memory[curr_node]->ninfo->get_phys_prop()) > job->estimated_processing   ) ||
-		     (get_walltime_limit_max(current_gap -> nodes_memory[curr_node]->ninfo->get_phys_prop()) != 0 && get_walltime_limit_max(current_gap -> nodes_memory[curr_node]->ninfo->get_phys_prop()) < job->estimated_processing   )))
-		  curr_node++;
+     */
+      while (curr_node < current_gap -> num_nodes &&
+            ((current_gap -> nodes_memory[curr_node]->ninfo ->is_down() ||  current_gap -> nodes_memory[curr_node]->ninfo ->is_offline() || current_gap -> nodes_memory[curr_node]->ninfo ->is_notusable())||
+            (current_gap -> nodes_memory[curr_node]->ninfo->get_avail_before() != 0 && current_gap -> nodes_memory[curr_node]->ninfo->get_avail_before() < (current_gap->start_time + job ->estimated_processing))||
+            current_gap -> nodes_memory[curr_node] -> num_cpus < job -> req_ppn ||
+            current_gap -> nodes_memory[curr_node] -> available_mem < job -> req_mem ||
+            (current_gap -> nodes_memory[curr_node] -> available_scratch_local > -1 && current_gap -> nodes_memory[curr_node] -> available_scratch_local < job -> req_scratch_local ) ||
+            (get_walltime_limit_min(current_gap -> nodes_memory[curr_node]->ninfo->get_phys_prop()) != 0 && get_walltime_limit_min(current_gap -> nodes_memory[curr_node]->ninfo->get_phys_prop()) > job->estimated_processing   ) ||
+            (get_walltime_limit_max(current_gap -> nodes_memory[curr_node]->ninfo->get_phys_prop()) != 0 && get_walltime_limit_max(current_gap -> nodes_memory[curr_node]->ninfo->get_phys_prop()) < job->estimated_processing   )))
+        curr_node++;
           
 /*
       if (job->jinfo->is_exclusive && current_gap ->nodes_memory[curr_node]->ninfo->get_cores_total() >= job->req_ppn){
@@ -367,117 +371,127 @@ plan_gap* find_first_gap(sched* schedule, int k, plan_job* job, bool fix_job)
     	 job->original_req_ppn = 0;
          }
 */
-	  if (curr_node >= current_gap -> num_nodes){
-	    break; //skok do hlavniho while jdu na dalsi diru
-	    }
+      if (curr_node >= current_gap -> num_nodes)
+        {
+        break; //skok do hlavniho while jdu na dalsi diru
+        }
           
-          if (job->req_gpu > 0) {
-              res = current_gap -> nodes_memory[curr_node]->ninfo->get_resource("gpu");
-              if (res == NULL || job->req_gpu > res->get_capacity()){
-                  curr_node++;
-                  continue;
+      if (job->req_gpu > 0)
+        {
+        res = current_gap -> nodes_memory[curr_node]->ninfo->get_resource("gpu");
+        if (res == NULL || job->req_gpu > res->get_capacity())
+          {
+          curr_node++;
+          continue;
+          }
+        }          
+ 
+      duration = current_gap -> duration;
+
+      considered_node = current_gap -> nodes_memory[curr_node] -> ninfo;
+
+      //kolikrad se tam req_ppn vleze? (uz vim ze aspon jednou)
+
+      tmp_max_nodes_ppn = check_node_in_gap(current_gap, considered_node, job -> req_ppn, job -> req_mem, job -> req_scratch_local);
+
+      if (job->jinfo->is_exclusive() && tmp_max_nodes_ppn>0)
+        tmp_max_nodes_ppn = 1;
+
+      gap_ok = 1;
+
+      num_considered_gaps=add_gap_to_considered(num_considered_gaps,current_gap);
+
+      if (duration < job -> estimated_processing)
+        {
+        schedule -> gaps[k] -> current = (void*)current_gap;
+        while (duration < job -> estimated_processing && list_get_next(schedule -> gaps[k]) != NULL)
+          {
+          next_gap=(plan_gap*)schedule -> gaps[k] -> current;
+
+          if (next_gap -> start_time != next_gap -> predeccessor -> end_time)
+            {
+            gap_ok = 0;
+            break;
+            }
+
+          tmp_max_ppn = check_node_in_gap(next_gap, considered_node, job -> req_ppn, job -> req_mem, job -> req_scratch_local);
+
+          if (job->jinfo->is_exclusive() && tmp_max_ppn>0)
+            tmp_max_ppn = 1;
+
+          if (tmp_max_ppn == 0)
+            {
+            gap_ok = 0;
+            break;
+            }
+
+          if (tmp_max_ppn < tmp_max_nodes_ppn)
+            tmp_max_nodes_ppn = tmp_max_ppn;
+
+          if (next_gap -> duration == LONG_MAX)
+            {
+            duration = LONG_MAX;
+            }
+          else
+            {
+            duration += next_gap -> duration;
+            }
+
+          if (duration >= job -> estimated_processing)
+            {
+            plan_num_nodes +=tmp_max_nodes_ppn;
+            if (plan_num_nodes > job -> req_num_nodes)
+              plan_num_nodes = job -> req_num_nodes;
+
+            if (fix_job)
+              for (int j = 0; j < plan_num_nodes; j++)
+                if (job -> fixed_nname_arr[j] == NULL)
+                  job -> fixed_nname_arr[j] = strdup(considered_node -> get_name());
+            }
+
+          num_considered_gaps=add_gap_to_considered(num_considered_gaps,next_gap);
+
+          if (duration >= job -> estimated_processing && plan_num_nodes == job -> req_num_nodes)
+            {
+            if (check_considered_gaps(num_considered_gaps, job, schedule, k))
+              {
+              return current_gap;
               }
-              }          
+            else
+              {
+              continue;
+              }
+            }
+          }
 
-	  duration = current_gap -> duration;
+        if (next_gap != NULL && next_gap -> start_time != next_gap -> predeccessor -> end_time)
+          {
+          gap_ok = 0;
+          break;//dira nenavezuje jdu na dalsi diru od zacatku
+          }
+        }
+      else
+        {
+        plan_num_nodes += tmp_max_nodes_ppn;
+        if (plan_num_nodes > job -> req_num_nodes)
+          plan_num_nodes = job -> req_num_nodes;
 
-	  considered_node = current_gap -> nodes_memory[curr_node] -> ninfo;
+        if (fix_job)
+          for (int j = 0; j < plan_num_nodes; j++)
+            if (job -> fixed_nname_arr[j] == NULL)
+              job -> fixed_nname_arr[j] = strdup(considered_node -> get_name());
+        }
 
-	  //kolikrad se tam req_ppn vleze? (uz vim ze aspon jednou)
-
-	  tmp_max_nodes_ppn = check_node_in_gap(current_gap, considered_node, job -> req_ppn, job -> req_mem, job -> req_scratch_local);
-
-	  if (job->jinfo->is_exclusive() && tmp_max_nodes_ppn>0)
-		  tmp_max_nodes_ppn = 1;
-
-	  gap_ok = 1;
-
-	  num_considered_gaps=add_gap_to_considered(num_considered_gaps,current_gap);
-
-	  if (duration < job -> estimated_processing)
-	    {
-	    schedule -> gaps[k] -> current = (void*)current_gap;
-	    while (duration < job -> estimated_processing && list_get_next(schedule -> gaps[k]) != NULL)
-	      {
-	      next_gap=(plan_gap*)schedule -> gaps[k] -> current;
-
-	      if (next_gap -> start_time != next_gap -> predeccessor -> end_time)
-	        {
-	    	gap_ok = 0;
-	        break;
-	        }
-
-	      tmp_max_ppn = check_node_in_gap(next_gap, considered_node, job -> req_ppn, job -> req_mem, job -> req_scratch_local);
-
-	      if (job->jinfo->is_exclusive() && tmp_max_ppn>0)
-	    	  tmp_max_ppn = 1;
-
-	      if (tmp_max_ppn == 0)
-	        {
-	    	gap_ok = 0;
-	        break;
-	        }
-
-	      if (tmp_max_ppn < tmp_max_nodes_ppn)
-	    	tmp_max_nodes_ppn = tmp_max_ppn;
-
-	      if (next_gap -> duration == LONG_MAX)
-	        {
-	        duration = LONG_MAX;
-	        }else
-	        {
-	        duration += next_gap -> duration;
-	        }
-
-	      if (duration >= job -> estimated_processing)
-	        {
-	        plan_num_nodes +=tmp_max_nodes_ppn;
-	        if (plan_num_nodes > job -> req_num_nodes)
-	    	  plan_num_nodes = job -> req_num_nodes;
-
-	        if (fix_job)
-  	          for (int j = 0; j < plan_num_nodes; j++)
-	            if (job -> fixed_nname_arr[j] == NULL)
-	              job -> fixed_nname_arr[j] = strdup(considered_node -> get_name());
-	        }
-
-	      num_considered_gaps=add_gap_to_considered(num_considered_gaps,next_gap);
-
-	      if (duration >= job -> estimated_processing && plan_num_nodes == job -> req_num_nodes){
-	    	  if (check_considered_gaps(num_considered_gaps, job, schedule, k)) {
-	    		return current_gap;
-	    	  } else {
-	    	  continue;
-                  }
-                }
-	      }
-
-	    if (next_gap != NULL && next_gap -> start_time != next_gap -> predeccessor -> end_time)
-	      {
-	      gap_ok = 0;
-	      break;//dira nenavezuje jdu na dalsi diru od zacatku
-	      }
-	    } else
-	    {
-	    plan_num_nodes += tmp_max_nodes_ppn;
-	    if (plan_num_nodes > job -> req_num_nodes)
-	      plan_num_nodes = job -> req_num_nodes;
-
-	   if (fix_job)
-	    for (int j = 0; j < plan_num_nodes; j++)
-	      if (job -> fixed_nname_arr[j] == NULL)
-	        job -> fixed_nname_arr[j] = strdup(considered_node -> get_name());
-	   }
-
-	  if (gap_ok && duration >= job -> estimated_processing && plan_num_nodes >= job -> req_num_nodes)
-	    if (check_considered_gaps(num_considered_gaps, job, schedule, k))
-	      return current_gap;
+      if (gap_ok && duration >= job -> estimated_processing && plan_num_nodes >= job -> req_num_nodes)
+        if (check_considered_gaps(num_considered_gaps, job, schedule, k))
+          return current_gap;
 	  //zkus dalsi uzel v dire
-	  curr_node++;
-	  }
+    
+      curr_node++;
+      }
 
     /*vratime i=i aby mohl vnejsi while korektne pokracovat*/
-	schedule -> gaps[k] -> current = (void*)current_gap;
+    schedule -> gaps[k] -> current = (void*)current_gap;
     }
 
   return NULL;
@@ -495,7 +509,8 @@ int job_put_in_gap(sched* schedule, int k, plan_job* job, plan_gap* gap)
   if ( gap -> following_job != NULL)
     {
     list_add_infrontof(schedule -> jobs[k], gap -> following_job, (void*)job);
-    } else
+    }
+  else
     {
     list_add_end(schedule -> jobs[k], (void*)job);
     }
@@ -529,16 +544,16 @@ plan_gap* gap_duplicate(plan_gap *gap)
 
   for (int i = 0;i < gap_2 -> num_nodes; i++)
     {
-	if ((gap_2 -> nodes_memory[i] = (plan_gap_mem*)malloc(sizeof(plan_gap_mem))) == NULL)
+    if ((gap_2 -> nodes_memory[i] = (plan_gap_mem*)malloc(sizeof(plan_gap_mem))) == NULL)
       {
       perror("Memory Allocation Error");
       return NULL;
       }
 
-	gap_2 -> nodes_memory[i] -> available_mem = gap -> nodes_memory[i] -> available_mem;
-	gap_2 -> nodes_memory[i] -> available_scratch_local = gap -> nodes_memory[i] -> available_scratch_local;
-	gap_2 -> nodes_memory[i] -> num_cpus = gap -> nodes_memory[i] -> num_cpus;
-	gap_2 -> nodes_memory[i] -> ninfo = gap -> nodes_memory[i] -> ninfo;
+    gap_2 -> nodes_memory[i] -> available_mem = gap -> nodes_memory[i] -> available_mem;
+    gap_2 -> nodes_memory[i] -> available_scratch_local = gap -> nodes_memory[i] -> available_scratch_local;
+    gap_2 -> nodes_memory[i] -> num_cpus = gap -> nodes_memory[i] -> num_cpus;
+    gap_2 -> nodes_memory[i] -> ninfo = gap -> nodes_memory[i] -> ninfo;
     }
 
   return gap_2;
@@ -558,108 +573,108 @@ void* insert_new_gap(plan_list* list, plan_gap* last_gap, plan_gap *gap_new)
 
   if (last_gap == NULL)
     {
-	gap_copy = gap_duplicate(gap_new);
-	return list_add_end(list, (void*)gap_copy);
+    gap_copy = gap_duplicate(gap_new);
+    return list_add_end(list, (void*)gap_copy);
     }
 
   if (last_gap -> end_time <= gap_new -> start_time)
     {
-	if (last_gap -> end_time == gap_new -> start_time)
-	  adjust_gap_memory(gap_new,last_gap);
+    if (last_gap -> end_time == gap_new -> start_time)
+      adjust_gap_memory(gap_new,last_gap);
 
-	gap_copy = gap_duplicate(gap_new);
+    gap_copy = gap_duplicate(gap_new);
     return list_add_end(list, (void*)gap_copy);
     }
 
   while (1)
     {
-	gap_previouse = (plan_gap*)get_predeccessor((void*)last_gap,Gaps);
+    gap_previouse = (plan_gap*)get_predeccessor((void*)last_gap,Gaps);
 
-	if (gap_previouse == NULL)
-	  break;
+    if (gap_previouse == NULL)
+      break;
 
-	if (gap_previouse -> end_time <= gap_new -> start_time)
-	  break;
+    if (gap_previouse -> end_time <= gap_new -> start_time)
+      break;
 
-	last_gap = gap_previouse;
+    last_gap = gap_previouse;
     }
 
   //dira se vleze pred "posledni" diru, sup tam s ni
   if (gap_new -> end_time <= last_gap -> start_time)
     {
-	gap_copy = gap_duplicate(gap_new);
+    gap_copy = gap_duplicate(gap_new);
 
-	return list_add_infrontof(list, last_gap, gap_copy);
+    return list_add_infrontof(list, last_gap, gap_copy);
     }
 
   //dira zacina pred "posledni" dirou
   if (last_gap -> start_time > gap_new -> start_time)
     {
- 	gap_copy = gap_duplicate(gap_new);
+    gap_copy = gap_duplicate(gap_new);
 
- 	gap_copy -> end_time = last_gap -> start_time;
- 	gap_copy -> duration = gap_copy -> end_time - gap_copy -> start_time;
+    gap_copy -> end_time = last_gap -> start_time;
+    gap_copy -> duration = gap_copy -> end_time - gap_copy -> start_time;
 
- 	list_add_infrontof(list, last_gap, gap_copy);
+    list_add_infrontof(list, last_gap, gap_copy);
 
- 	gap_new -> start_time = last_gap -> start_time;
- 	gap_new -> duration = gap_new -> end_time - gap_new -> start_time;
+    gap_new -> start_time = last_gap -> start_time;
+    gap_new -> duration = gap_new -> end_time - gap_new -> start_time;
     }
 
   //dira zacina za zacatkem "posledni" diry
   if (last_gap -> start_time < gap_new -> start_time)
     {
-	gap_copy = gap_duplicate(last_gap);
+    gap_copy = gap_duplicate(last_gap);
 
-	gap_copy -> end_time = gap_new -> start_time;
-	gap_copy -> duration = gap_copy -> end_time - gap_copy -> start_time;
+    gap_copy -> end_time = gap_new -> start_time;
+    gap_copy -> duration = gap_copy -> end_time - gap_copy -> start_time;
 
-	last_gap -> start_time = gap_new -> start_time;
-	last_gap -> duration = last_gap -> end_time - last_gap -> start_time;
+    last_gap -> start_time = gap_new -> start_time;
+    last_gap -> duration = last_gap -> end_time - last_gap -> start_time;
 
-	list_add_infrontof(list, last_gap, gap_copy);
+    list_add_infrontof(list, last_gap, gap_copy);
     }
 
   //jsem-li zde, tak start posledni diry je stejnej jako start novy diry
   if (last_gap -> start_time != gap_new -> start_time)
-	sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "error", "gap inserting");
+    sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "error", "gap inserting");
 
   if (last_gap -> end_time == gap_new -> end_time)
     {
-	add_mem_gap_to_gap(last_gap,gap_new);
+    add_mem_gap_to_gap(last_gap,gap_new);
 
-	return last_gap;
+    return last_gap;
     }
 
   if (gap_new -> end_time < last_gap -> end_time)
     {
-	gap_copy = gap_duplicate(last_gap);
+    gap_copy = gap_duplicate(last_gap);
 
-	gap_copy -> start_time = gap_new -> end_time;
-	gap_copy -> duration = gap_copy -> end_time - gap_copy -> start_time;
+    gap_copy -> start_time = gap_new -> end_time;
+    gap_copy -> duration = gap_copy -> end_time - gap_copy -> start_time;
 
-	last_gap -> end_time = gap_new -> end_time;
-	last_gap -> duration = last_gap -> end_time - last_gap -> start_time;
+    last_gap -> end_time = gap_new -> end_time;
+    last_gap -> duration = last_gap -> end_time - last_gap -> start_time;
 
-	list_add_inbackof(list, last_gap,gap_copy );
+    list_add_inbackof(list, last_gap,gap_copy );
 
-	add_mem_gap_to_gap(last_gap,gap_new);
+    add_mem_gap_to_gap(last_gap,gap_new);
     }
 
 
   if (last_gap -> end_time < gap_new -> end_time)
     {
-	add_mem_gap_to_gap(last_gap,gap_new);
+    add_mem_gap_to_gap(last_gap,gap_new);
 
-	//jestli nova dira konci az za toutodirou pozor na pamet!
-	//prepocitame nove hodnoty pro pamet
+    //jestli nova dira konci az za toutodirou pozor na pamet!
+    //prepocitame nove hodnoty pro pamet
 
-	adjust_gap_memory(gap_new,last_gap);
+    adjust_gap_memory(gap_new,last_gap);
 
-	gap_new -> start_time = last_gap -> end_time;
-	gap_new -> duration = gap_new -> end_time - gap_new -> start_time;
+    gap_new -> start_time = last_gap -> end_time;
+    gap_new -> duration = gap_new -> end_time - gap_new -> start_time;
 
-	return insert_new_gap(list, last_gap -> successor, gap_new);
+    return insert_new_gap(list, last_gap -> successor, gap_new);
     }
 
   return last_gap;

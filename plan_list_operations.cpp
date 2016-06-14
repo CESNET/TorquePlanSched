@@ -61,9 +61,9 @@ int list_append(plan_list* list, plan_list* list_to_append)
 
   if (list -> num_items == 0)
     {
-	list -> first = list_to_append -> first;
-	list -> last = list_to_append -> last;
-	list -> num_items += list_to_append -> num_items;
+    list -> first = list_to_append -> first;
+    list -> last = list_to_append -> last;
+    list -> num_items += list_to_append -> num_items;
     }
 
   free(list_to_append);
@@ -94,7 +94,7 @@ void* list_get_next(plan_list* list)
     return NULL;
 
   if (list -> current == NULL)
-	return list -> current = list -> first;
+    return list -> current = list -> first;
 
   list -> current = get_successor(list -> current, list -> type);
   return list -> current;
@@ -106,7 +106,7 @@ void* list_get_previous(plan_list* list)
     return NULL;
 
   if (list -> current == NULL)
-	return list -> current = list -> last;
+    return list -> current = list -> last;
 
   list -> current = get_predeccessor(list -> current, list -> type);
   return list -> current;
@@ -122,7 +122,7 @@ void* get_successor(void* item,listtype type)
   */
 
   if (type == Gaps)
-	return (void*)(((plan_gap*) item) -> successor);
+    return (void*)(((plan_gap*) item) -> successor);
 
   if (type == Jobs)
     return (void*)(((plan_job*) item) -> successor);
@@ -157,13 +157,14 @@ void* set_successor(void* item, void* successor, listtype type)
   ((plan_item*) item)->successor = successor;
   */
   if (type == Gaps)
-	((plan_gap*) item) -> successor = (struct plan_gap*) successor;
+    ((plan_gap*) item) -> successor = (struct plan_gap*) successor;
 
   if (type == Jobs)
     ((plan_job*) item) -> successor = (struct plan_job*) successor;
 
   if (type == Limits)
     ((plan_limit*) item) -> successor = (struct plan_limit*) successor;
+  
   return successor;
 
   }
@@ -189,25 +190,26 @@ void* list_add_infrontof(plan_list* list, void* item_next, void* item_new)
   void* item_next_predeccessor;
 
   if (list == NULL)
-	return NULL;
+    return NULL;
 
   if (item_next == NULL)
-	return list_add_begin(list, (void*)item_new);
+    return list_add_begin(list, (void*)item_new);
 
   if (item_new == NULL)
     {
-	if (list -> type == Jobs)
-	  item_new = (void*)job_create();
-	if (list -> type == Gaps)
-	  item_new = (void*)gap_create();
+    if (list -> type == Jobs)
+      item_new = (void*)job_create();
+    
+    if (list -> type == Gaps)
+      item_new = (void*)gap_create();
     }
 
   item_next_predeccessor = get_predeccessor(item_next, list -> type);
   if (item_next_predeccessor != NULL)
     {
-	set_successor(item_next_predeccessor, item_new, list -> type);
-	}
-    else
+    set_successor(item_next_predeccessor, item_new, list -> type);
+    }
+  else
     {
     list -> first = item_new;
     }
@@ -218,6 +220,7 @@ void* list_add_infrontof(plan_list* list, void* item_next, void* item_new)
 
   list -> num_items++;
   list -> current = item_new;
+  
   return item_new;
 }
 
@@ -226,26 +229,26 @@ void* list_add_inbackof(plan_list* list, void* item_previous, void* item_new)
   void* item_previous_successor;
 
   if (list == NULL)
-	return NULL;
+    return NULL;
 
   if (item_previous == NULL)
     return list_add_end(list, (void*)item_new);
 
   if (item_new == NULL)
     {
-	if (list -> type == Jobs)
-	  item_new = (void*)job_create();
+    if (list -> type == Jobs)
+      item_new = (void*)job_create();
 
-	if (list -> type == Gaps)
-	  item_new = (void*)gap_create();
+    if (list -> type == Gaps)
+      item_new = (void*)gap_create();
     }
 
   item_previous_successor = get_successor(item_previous, list -> type);
   if (item_previous_successor != NULL)
     {
-	set_predeccessor(item_previous_successor, item_new, list -> type);
-	}
-    else
+    set_predeccessor(item_previous_successor, item_new, list -> type);
+    }
+  else
     {
     list -> last = item_new;
     }
@@ -267,20 +270,21 @@ void* list_add_begin(plan_list* list, void* item_new)
 
   if (item_new == NULL)
     {
-	if (list -> type == Jobs)
-	  item_new = (void*)job_create();
+    if (list -> type == Jobs)
+      item_new = (void*)job_create();
 
-	if (list -> type == Gaps)
-	  item_new = (void*)gap_create();
+    if (list -> type == Gaps)
+      item_new = (void*)gap_create();
     }
 
   if (list -> num_items == 0)
     {
-	list -> num_items++;
-	list -> first = item_new;
-	list -> last = item_new;
-	list -> current = item_new;
-	return item_new;
+    list -> num_items++;
+    list -> first = item_new;
+    list -> last = item_new;
+    list -> current = item_new;
+
+    return item_new;
     }
 
   return list_add_infrontof(list, list -> first, item_new);
@@ -292,39 +296,43 @@ void* list_add_end(plan_list* list, void* item_new)
     return NULL;
 
   if (item_new == NULL)
-	{
-	if (list -> type == Jobs)
-	  item_new = (void*)job_create();
+    {
+    if (list -> type == Jobs)
+      item_new = (void*)job_create();
 
-	if (list -> type == Gaps)
-	  item_new = (void*)gap_create();
-	}
+    if (list -> type == Gaps)
+      item_new = (void*)gap_create();
+    }
 
   if (list -> num_items == 0)
     {
-	list -> num_items++;
-	list -> first = item_new;
-	list -> last = item_new;
-	list -> current = item_new;
-	return item_new;
+    list -> num_items++;
+    list -> first = item_new;
+    list -> last = item_new;
+    list -> current = item_new;
+
+    return item_new;
     }
+  
   return list_add_inbackof(list, list -> last, item_new);
   }
 
 void* list_get_item(plan_list* list, int position)
   {
   if (list == NULL || list -> num_items <= position || position < 0)
-	  return NULL;
+    return NULL;
 
   if (list -> num_items / 2 < position )
     {
-	list -> current = list -> last;
-	for (int i = 0; i < list -> num_items - position -1; i++)
-	  list -> current = get_predeccessor(list -> current,list -> type);
+    list -> current = list -> last;
+    
+    for (int i = 0; i < list -> num_items - position -1; i++)
+      list -> current = get_predeccessor(list -> current,list -> type);
     }
-    else
+  else
     {
     list -> current = list -> first;
+    
     for (int i = 0; i < position; i++)
       list -> current = get_successor(list -> current, list -> type);
     }
@@ -356,33 +364,34 @@ int list_remove_item(plan_list* list, void* item_remove, unsigned set_free)
 
   if (item_remove_predeccessor != NULL)
     {
-	set_successor(item_remove_predeccessor, item_remove_successor, list -> type);
+    set_successor(item_remove_predeccessor, item_remove_successor, list -> type);
     }
   else
     {
-	set_predeccessor(item_remove_successor, NULL, list -> type);
+    set_predeccessor(item_remove_successor, NULL, list -> type);
     list -> first = item_remove_successor;
     }
 
   if (item_remove_successor != NULL)
     {
-	set_predeccessor(item_remove_successor, item_remove_predeccessor, list -> type);
+    set_predeccessor(item_remove_successor, item_remove_predeccessor, list -> type);
     }
   else
     {
-	set_successor(item_remove_predeccessor, NULL, list -> type);
+    set_successor(item_remove_predeccessor, NULL, list -> type);
     list -> last=item_remove_predeccessor;
     }
 
   list -> num_items--;
   list -> current = NULL;
+  
   if (set_free)
     {
-	if (list -> type == Jobs) free_job((plan_job*)item_remove);
-	if (list -> type == Gaps) free_gap((plan_gap*)item_remove);
-	if (list -> type == Limits) free_limit((plan_limit*)item_remove);
+    if (list -> type == Jobs) free_job((plan_job*)item_remove);
+    if (list -> type == Gaps) free_gap((plan_gap*)item_remove);
+    if (list -> type == Limits) free_limit((plan_limit*)item_remove);
     }
-    else
+  else
     {
     set_successor(item_remove, NULL, list -> type);
     set_predeccessor(item_remove, NULL, list -> type);
@@ -407,6 +416,7 @@ int list_move_item(plan_list* list, void* item_move, void* predeccessor)
 
   if (predeccessor == NULL)
     list_add_infrontof(list, list_get_first(list), item_move);
+  
   return 0;
   }
 
@@ -419,11 +429,11 @@ int list_swap_item(plan_list* list, void* item_one,void* item_two)
 
   predeccessor = get_predeccessor(item_one, list -> type);
   if ( predeccessor != NULL)
-	  return list_move_item(list, item_one, item_two) && list_move_item(list, item_two, predeccessor);
+    return list_move_item(list, item_one, item_two) && list_move_item(list, item_two, predeccessor);
 
   predeccessor = get_predeccessor(item_two, list -> type);
   if ( predeccessor != NULL)
-  	  return list_move_item(list, item_two, item_one) && list_move_item(list, item_one, predeccessor);
+    return list_move_item(list, item_two, item_one) && list_move_item(list, item_one, predeccessor);
 
   return 0;
   }
@@ -431,7 +441,7 @@ int list_swap_item(plan_list* list, void* item_one,void* item_two)
 int list_repleace_item(plan_list* list, void* item_old, void* item_new, unsigned set_free)
   {
   if (item_old == item_new || item_old == NULL || item_new == NULL )
- 	return 1;
+    return 1;
 
   if (get_successor(item_new, list -> type) != NULL || get_predeccessor(item_new, list -> type) != NULL )
     return 1;
@@ -439,25 +449,29 @@ int list_repleace_item(plan_list* list, void* item_old, void* item_new, unsigned
   set_successor(item_new, get_successor(item_old, list -> type), list -> type);
   set_predeccessor(item_new, get_predeccessor(item_old, list -> type), list->type);
 
-  if (get_successor(item_new, list -> type) != NULL){
-    set_predeccessor(get_successor(item_new, list -> type), item_new, list -> type);
-    }else
+  if (get_successor(item_new, list -> type) != NULL)
     {
-	list -> last = item_new;
+    set_predeccessor(get_successor(item_new, list -> type), item_new, list -> type);
+    }
+  else
+    {
+    list -> last = item_new;
     }
 
   if (get_predeccessor(item_new, list -> type) != NULL)
     {
-	set_successor(get_predeccessor(item_new, list -> type), item_new, list -> type);
-    }else
-    {
-	list -> first = item_new;
+    set_successor(get_predeccessor(item_new, list -> type), item_new, list -> type);
     }
+  else
+    {
+    list -> first = item_new;
+    }
+  
   if (set_free)
     {
     free(item_old);
     }
-    else
+  else
     {
     set_successor(item_old, NULL, list -> type);
     set_predeccessor(item_old, NULL, list -> type);
@@ -477,32 +491,30 @@ int list_adjust_job_position(plan_list* list, plan_job* job)
   //posun dopredu
   while (new_predeccessor != NULL &&
 		  (new_predeccessor -> start_time > job -> start_time ||
-		    (new_predeccessor -> start_time == job -> start_time && new_predeccessor -> job_id > job -> job_id)
-		  )
-		)
+		    (new_predeccessor -> start_time == job -> start_time && new_predeccessor -> job_id > job -> job_id)))
     new_predeccessor = new_predeccessor -> predeccessor;
 
 
   //posun dozadu
   while (new_successor != NULL &&
 		  (new_successor -> start_time < job ->  start_time ||
-		    (new_successor -> start_time == job -> start_time && new_successor -> job_id < job -> job_id)
-		  )
-		)
+		    (new_successor -> start_time == job -> start_time && new_successor -> job_id < job -> job_id)))
     new_successor = new_successor -> successor;
 
-  if (new_successor != job -> successor) {
+  if (new_successor != job -> successor)
+    {
     if (new_successor == NULL)
-    {
-	new_predeccessor = (plan_job*)list -> last;
-    } else
-    {
-    new_predeccessor = new_successor -> predeccessor;
+      {
+      new_predeccessor = (plan_job*)list -> last;
+      }
+    else
+      {
+      new_predeccessor = new_successor -> predeccessor;
+      }
     }
-  }
 
-  if (new_predeccessor != job -> predeccessor)
-    list_move_item(list, (void*) job, (void*) new_predeccessor);
+    if (new_predeccessor != job -> predeccessor)
+      list_move_item(list, (void*) job, (void*) new_predeccessor);
 
   return 0;
   }

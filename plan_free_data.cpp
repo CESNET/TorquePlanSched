@@ -35,9 +35,10 @@ void free_limit_account(plan_limit* limit)
   {
   for (int i = 0; i < limit -> num_accounts; i++)
     {
-	free(limit-> accounts[i]->num_cpus);
-	free(limit -> accounts[i]);
+    free(limit-> accounts[i]->num_cpus);
+    free(limit -> accounts[i]);
     }
+  
   free(limit -> accounts);
   limit -> num_accounts = 0;
   }
@@ -53,12 +54,13 @@ void free_job(plan_job* job)
     free(job -> cpu_indexes);
 
   if (job -> latest_ncpu_index != NULL)
-  	free(job -> latest_ncpu_index);
+    free(job -> latest_ncpu_index);
 
   if (job->fixed_nname_arr != NULL)
-  	  for (int i=0; i< job->req_num_nodes; i++)
-  		  if (job->fixed_nname_arr[i]!= NULL)
-  			  free(job->fixed_nname_arr[i]);
+    for (int i=0; i< job->req_num_nodes; i++)
+      if (job->fixed_nname_arr[i]!= NULL)
+        free(job->fixed_nname_arr[i]);
+    
   free(job->fixed_nname_arr);
 
   free(job);
@@ -113,6 +115,7 @@ int free_list(plan_list* list_to_free)
 
   free(list_to_free);
   list_to_free = NULL;
+  
   return 0;
   }
 
@@ -123,12 +126,12 @@ int free_first_free_slots(first_free_slot** first_free_slots, plan_cluster* clus
   counter=0;
   for (int i = 0; i < cluster_k -> num_nodes; i++)
     {
-	free(first_free_slots[counter] -> releated_cpus);
-	counter += cluster_k -> nodes[i] -> get_cores_total();
-	}
+    free(first_free_slots[counter] -> releated_cpus);
+    counter += cluster_k -> nodes[i] -> get_cores_total();
+    }
 
   for (int i= 0; i < cluster_k -> num_cpus; i++)
-	  free(first_free_slots[i]);
+    free(first_free_slots[i]);
 
   free(first_free_slots);
 
@@ -140,9 +143,9 @@ void free_jobs_completed_jobs(JobInfo **jarr)
   if (jarr == NULL)
     return;
 
- // for (i = 0; jarr[i] != NULL; i++)
-//	if (jarr[i]->state == JobCompleted)
-  //    free_job_info(jarr[i]);
+  //for (i = 0; jarr[i] != NULL; i++)
+  //  if (jarr[i]->state == JobCompleted)
+  //  free_job_info(jarr[i]);
 
   free(jarr);
   }
@@ -163,7 +166,6 @@ void free_queues_completed_jobs(queue_info **qarr, char free_jobs_too)
     }
 
   free(qarr);
-
   }
 
 

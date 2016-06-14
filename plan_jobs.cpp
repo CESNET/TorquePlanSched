@@ -94,7 +94,8 @@ void* job_fillin(plan_job* job, JobInfo *assigned_job, time_t start_time, time_t
   if (assigned_job == NULL)
     {
     job -> job_id = -1;
-    } else
+    }
+  else
     {
     job -> job_id = parse_head_number(assigned_job -> job_id.c_str());
     }
@@ -104,7 +105,7 @@ void* job_fillin(plan_job* job, JobInfo *assigned_job, time_t start_time, time_t
   job -> req_num_nodes = find_resource_req(assigned_job -> resreq, "nodect") -> amount;
   
   if (find_resource_req(assigned_job -> resreq, "gpu"))
-      job -> req_gpu = find_resource_req(assigned_job -> resreq, "gpu") -> amount;
+    job -> req_gpu = find_resource_req(assigned_job -> resreq, "gpu") -> amount;
 
   job -> req_ppn = job -> usage / job -> req_num_nodes;
 
@@ -115,18 +116,22 @@ void* job_fillin(plan_job* job, JobInfo *assigned_job, time_t start_time, time_t
   job -> req_scratch_local = job_get_scratch_local(assigned_job) ;
 
   res_walltime = find_resource_req(assigned_job -> resreq, "walltime");
-  if (res_walltime == NULL) {
-	  job -> estimated_processing = DEFAULT_WALLTIME;
-  } else {
-	  job -> estimated_processing = res_walltime -> amount;
-  }
+  if (res_walltime == NULL)
+    {
+    job -> estimated_processing = DEFAULT_WALLTIME;
+    } 
+  else 
+    {
+    job -> estimated_processing = res_walltime -> amount;
+    }
 
   if (start_time == -1)
     {
-	job -> start_time = -1;
-
-	job -> completion_time = -1;
-    } else
+    job -> start_time = -1;
+    
+    job -> completion_time = -1;
+    }
+  else
     {
     job -> start_time = start_time;
 
@@ -148,7 +153,7 @@ void* job_fillin(plan_job* job, JobInfo *assigned_job, time_t start_time, time_t
 
   for (int i=0; i<job -> req_num_nodes;i++)
     {
-	job -> ninfo_arr[i]= NULL;
+    job -> ninfo_arr[i]= NULL;
     }
 
   if ((job -> fixed_nname_arr = (char**)malloc(job -> req_num_nodes * sizeof(char*))) == NULL)
@@ -159,7 +164,7 @@ void* job_fillin(plan_job* job, JobInfo *assigned_job, time_t start_time, time_t
 
   for (int i=0; i<job -> req_num_nodes;i++)
     {
-	job -> fixed_nname_arr[i] = NULL;
+    job -> fixed_nname_arr[i] = NULL;
     }
 
   if ((job -> cpu_indexes = (int*) malloc(job -> usage * sizeof(int))) == NULL)
@@ -191,41 +196,43 @@ int add_already_running_jobs(sched* schedule, JobInfo** new_jobs)
 
   while (*new_jobs != NULL)
     {
-	if ((*new_jobs) -> state == JobRunning)
-	  {
-	  new_job = job_create();
-	  job_fillin(new_job, *new_jobs, (*new_jobs) -> stime, 0);
-	  sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, new_job -> jinfo -> job_id.c_str(), "new job already running");
+    if ((*new_jobs) -> state == JobRunning)
+      {
+      new_job = job_create();
+      job_fillin(new_job, *new_jobs, (*new_jobs) -> stime, 0);
+      sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, new_job -> jinfo -> job_id.c_str(), "new job already running");
 
-	  new_job->account_id = set_and_get_account_id((char*)new_job->jinfo->account.c_str());
+      new_job->account_id = set_and_get_account_id((char*)new_job->jinfo->account.c_str());
 
-	  found=0;
-	  for (cl_number=0; cl_number < schedule -> num_clusters; cl_number++)
-	    {
-		for (int i=0; i<schedule -> clusters[cl_number] -> num_nodes; i++)
-		  {
-		  if (!schedule -> clusters[cl_number] -> nodes[i] -> has_jobs())
-		    continue;
+      found=0;
+      for (cl_number=0; cl_number < schedule -> num_clusters; cl_number++)
+        {
+        for (int i=0; i<schedule -> clusters[cl_number] -> num_nodes; i++)
+          {
+          if (!schedule -> clusters[cl_number] -> nodes[i] -> has_jobs())
+            continue;
 
-		  for (int j=0; j<schedule -> clusters[cl_number] -> nodes[i] -> get_cores_total(); j++)
-		    if (new_job -> jinfo == schedule -> clusters[cl_number] -> nodes[i] -> jobs_on_cpu[j])
-		    {
-			sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, schedule -> clusters[cl_number] -> nodes[i] -> get_name(), "already running job found on");
-			list_add_begin(schedule -> jobs[cl_number], new_job);
+          for (int j=0; j<schedule -> clusters[cl_number] -> nodes[i] -> get_cores_total(); j++)
+            if (new_job -> jinfo == schedule -> clusters[cl_number] -> nodes[i] -> jobs_on_cpu[j])
+              {
+              sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, schedule -> clusters[cl_number] -> nodes[i] -> get_name(), "already running job found on");
+              list_add_begin(schedule -> jobs[cl_number], new_job);
 
-			j = schedule -> clusters[cl_number] -> nodes[i] -> get_cores_total();
-			i = schedule -> clusters[cl_number] -> num_nodes;
-			cl_number = schedule -> num_clusters;
+              j = schedule -> clusters[cl_number] -> nodes[i] -> get_cores_total();
+              i = schedule -> clusters[cl_number] -> num_nodes;
+              cl_number = schedule -> num_clusters;
 
-			found = 1; break;
-		    }
-		  if (found == 1) break;
-		  }
-		if (found == 1) break;
-	    }
-	  }
-	counter++;
-	new_jobs++;
+              found = 1; break;
+              }
+          if (found == 1)
+            break;
+          }
+        if (found == 1)
+          break;
+        }
+      }
+    counter++;
+    new_jobs++;
     }
 
   new_jobs-=counter;
@@ -255,112 +262,113 @@ int try_to_schedule_new_jobs(int pbs_sd, server_info *p_info, sched* schedule, J
 
   while (*new_jobs!=NULL)
     {
-        total_time = 0;
-        gettimeofday(&tv_start, NULL); 
+    total_time = 0;
+    gettimeofday(&tv_start, NULL); 
         
-	if (((*new_jobs) -> state != JobRunning) && ((*new_jobs) -> state != JobQueued))
-	  {
+    if (((*new_jobs) -> state != JobRunning) && ((*new_jobs) -> state != JobQueued))
+      {
       //job neni obslouzen
-	  }
+      }
 
-	if ((*new_jobs) -> state == JobQueued)
-	  {
-	  new_job = job_create();
+    if ((*new_jobs) -> state == JobQueued)
+      {
+      new_job = job_create();
 
-	  job_fillin(new_job, *new_jobs, -1, 0);
+      job_fillin(new_job, *new_jobs, -1, 0);
 
-	  new_job->account_id = set_and_get_account_id((char*)new_job->jinfo->account.c_str());
+      new_job->account_id = set_and_get_account_id((char*)new_job->jinfo->account.c_str());
 
-	  /*
-	   * Find first suitable gap on suitable cluster
-	   */
+      /*
+       * Find first suitable gap on suitable cluster
+       */
 
-	  found_earliest_gap = NULL;
-	  found_gap = NULL;
-	  cl_number = 0;
-	  cl_min = -1;
-	  while (cl_number < schedule -> num_clusters )
-	    {
+      found_earliest_gap = NULL;
+      found_gap = NULL;
+      cl_number = 0;
+      cl_min = -1;
+      while (cl_number < schedule -> num_clusters )
+        {
 
-		if (check_cluster_suitable(p_info, schedule -> clusters[cl_number], new_job))
-		  { /* not suitable; try next cluster */
-		  cl_number++;
-		  continue;
-		  }
+        if (check_cluster_suitable(p_info, schedule -> clusters[cl_number], new_job))
+          { /* not suitable; try next cluster */
+          cl_number++;
+          continue;
+          }
+        
+        found_gap = find_first_gap(schedule, cl_number ,new_job, false);
 
-		found_gap = find_first_gap(schedule, cl_number ,new_job, false);
+        if (found_gap != NULL)
+          {
+          if (found_earliest_gap == NULL)
+            {
+            found_earliest_gap = found_gap;
 
-	  	if (found_gap != NULL) {
-	  	  if (found_earliest_gap == NULL)
-	  	  {
-	  	  found_earliest_gap = found_gap;
+            cl_min = cl_number;
+            }
+          else
+            {
+            if (found_gap -> start_time < found_earliest_gap -> start_time )
+              {
+              found_earliest_gap = found_gap;
+              cl_min = cl_number;
+              }
+            }
+          }
+        cl_number++;
+        }
 
-	  	  cl_min = cl_number;
-	  	  } else
-	  	  {
-	  	    if (found_gap -> start_time < found_earliest_gap -> start_time ) {
-	  	      found_earliest_gap = found_gap;
-	  	      cl_min = cl_number;
-	  	      }
-	  	  }
-                }
-
-	  	cl_number++;
-	    }
-
-	  cl_number = cl_min;
-	  found_gap = found_earliest_gap;
+      cl_number = cl_min;
+      found_gap = found_earliest_gap;
           
-          gettimeofday(&tv_step1, NULL); 
-          step_time = (tv_step1.tv_sec * 1e6 + tv_step1.tv_usec) - (tv_start.tv_sec * 1e6 + tv_start.tv_usec);
+      gettimeofday(&tv_step1, NULL); 
+      step_time = (tv_step1.tv_sec * 1e6 + tv_step1.tv_usec) - (tv_start.tv_sec * 1e6 + tv_start.tv_usec);
           
-          sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, new_job -> jinfo -> job_id.c_str(), "time measurement; find_first_gap (several clusters, find the best): %ld", step_time);
-          total_time = total_time + step_time;
-          gettimeofday(&tv_start, NULL); 
+      sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, new_job -> jinfo -> job_id.c_str(), "time measurement; find_first_gap (several clusters, find the best): %ld", step_time);
+      total_time = total_time + step_time;
+      gettimeofday(&tv_start, NULL); 
 
-	  if (found_gap == NULL)
-		{
-		sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, new_job -> jinfo -> job_id.c_str(), "No suitable gap!");
-		update_job_planned_start(pbs_sd, new_job);
-		update_job_planned_nodes(pbs_sd, new_job->jinfo, "");
-		update_job_comment(pbs_sd, new_job -> jinfo, "Never Running: This jobs requirements will never be satisfied under the current grid configuration.");
-
-		not_scheduled ++;
-		} else
-		{
-		found_gap = find_first_gap(schedule, cl_number ,new_job, true);
+      if (found_gap == NULL)
+        {
+        sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, new_job -> jinfo -> job_id.c_str(), "No suitable gap!");
+        update_job_planned_start(pbs_sd, new_job);
+        update_job_planned_nodes(pbs_sd, new_job->jinfo, "");
+        update_job_comment(pbs_sd, new_job -> jinfo, "Never Running: This jobs requirements will never be satisfied under the current grid configuration.");
+        not_scheduled ++;
+        }
+      else
+        {
+        found_gap = find_first_gap(schedule, cl_number ,new_job, true);
                 
-                gettimeofday(&tv_step1, NULL); 
-                step_time = (tv_step1.tv_sec * 1e6 + tv_step1.tv_usec) - (tv_start.tv_sec * 1e6 + tv_start.tv_usec);
-                sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, new_job -> jinfo -> job_id.c_str(), "time measurement; find_first_gap (use the best): %ld", step_time);
-                total_time = total_time + step_time;
-                gettimeofday(&tv_start, NULL); 
+        gettimeofday(&tv_step1, NULL); 
+        step_time = (tv_step1.tv_sec * 1e6 + tv_step1.tv_usec) - (tv_start.tv_sec * 1e6 + tv_start.tv_usec);
+        sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, new_job -> jinfo -> job_id.c_str(), "time measurement; find_first_gap (use the best): %ld", step_time);
+        total_time = total_time + step_time;
+        gettimeofday(&tv_start, NULL); 
 
-		strftime(buffer_time, 30, "%Y:%m:%d %H:%M:%S", localtime(&found_gap -> start_time));
+        strftime(buffer_time, 30, "%Y:%m:%d %H:%M:%S", localtime(&found_gap -> start_time));
 
-		sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, new_job -> jinfo -> job_id.c_str(), "Gap found on cluster: %d start: %s gab duration: %ld job duration %ld", cl_number, buffer_time, found_gap -> duration, new_job -> estimated_processing );
+        sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, new_job -> jinfo -> job_id.c_str(), "Gap found on cluster: %d start: %s gab duration: %ld job duration %ld", cl_number, buffer_time, found_gap -> duration, new_job -> estimated_processing );
 
-		job_put_in_gap(schedule,cl_number,new_job,found_gap);
+        job_put_in_gap(schedule,cl_number,new_job,found_gap);
 
-		if (update_sched(schedule, cl_number, time_now) == 2)
-                    update_sched(schedule, cl_number, time_now);
+        if (update_sched(schedule, cl_number, time_now) == 2)
+          update_sched(schedule, cl_number, time_now);
                 
-                gettimeofday(&tv_step1, NULL);
-                step_time = (tv_step1.tv_sec * 1e6 + tv_step1.tv_usec) - (tv_start.tv_sec * 1e6 + tv_start.tv_usec);
-                sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, new_job -> jinfo -> job_id.c_str(), "time measurement; update (after find_first_gap): %ld cluster: %ld #jobs: %ld", step_time, cl_number, schedule ->jobs[cl_number]->num_items );
-                total_time = total_time + step_time;
+        gettimeofday(&tv_step1, NULL);
+        step_time = (tv_step1.tv_sec * 1e6 + tv_step1.tv_usec) - (tv_start.tv_sec * 1e6 + tv_start.tv_usec);
+        sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, new_job -> jinfo -> job_id.c_str(), "time measurement; update (after find_first_gap): %ld cluster: %ld #jobs: %ld", step_time, cl_number, schedule ->jobs[cl_number]->num_items );
+        total_time = total_time + step_time;
                 
-                long int total_num_jobs=0;                
-                for (int i = 0; i < schedule -> num_clusters; i++)
-                    total_num_jobs += schedule ->jobs[i]->num_items;
+        long int total_num_jobs=0;                
+        for (int i = 0; i < schedule -> num_clusters; i++)
+          total_num_jobs += schedule ->jobs[i]->num_items;
                 
-                sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, new_job -> jinfo -> job_id.c_str(), "time measurement; new job total time: %ld #jobs: %ld", total_time, total_num_jobs);
-		}
+        sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, new_job -> jinfo -> job_id.c_str(), "time measurement; new job total time: %ld #jobs: %ld", total_time, total_num_jobs);
+        }
 
-	  }
-
-	new_jobs++;
-	counter++;
+      }
+    new_jobs++;
+    counter++;
     }
 
   sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "New Jobs", "%d/%d scheduled", counter - not_scheduled, counter);
@@ -371,27 +379,27 @@ int try_to_schedule_new_jobs(int pbs_sd, server_info *p_info, sched* schedule, J
   }
 
 void remove_substring(char *s,const char *toremove)
-{
+  {
   while( (s = strstr(s,toremove)) )
     memmove(s,s+strlen(toremove),1+strlen(s+strlen(toremove)));
-}
+  }
 
 
-char *multip_numbers(int a,char *b){
+char *multip_numbers(int a,char *b)
+  {
+  char *newstring = (char*)malloc( sizeof(char) * ( strlen(b) + 3 ) );
+  strcpy (newstring,b);
 
-   char *newstring = (char*)malloc( sizeof(char) * ( strlen(b) + 3 ) );
-   strcpy (newstring,b);
+  char *s=strstr(b, "mem=");
+  long long int new_num=atoll(s+4) * a;
+  char *p = s+4;
+  while (isdigit(*p)) {p++;}
 
-   char *s=strstr(b, "mem=");
-   long long int new_num=atoll(s+4) * a;
-   char *p = s+4;
-   while (isdigit(*p)) {p++;}
+  newstring[strlen(b)-strlen(s)+4]='\0';
 
-   newstring[strlen(b)-strlen(s)+4]='\0';
-
-   sprintf(newstring, "%s%lld%s", newstring, new_num,p);
-   return newstring;
-}
+  sprintf(newstring, "%s%lld%s", newstring, new_num,p);
+  return newstring;
+  }
 
 int job_create_nodespec(plan_job* job)
   {
@@ -410,13 +418,13 @@ int job_create_nodespec(plan_job* job)
   tmp_ns_start = strchr((char*)job -> jinfo -> nodespec.c_str(), ':') + 1;
 
   if ((tmp_ppn = strstr(tmp_ns_start, "ppn=")!=NULL))
-	  tmp_ns_start = strchr(tmp_ns_start + tmp_ppn, ':') + 1;
+    tmp_ns_start = strchr(tmp_ns_start + tmp_ppn, ':') + 1;
 
   if (!strcmp(tmp_ns_start + strlen(tmp_ns_start) - 5,"#excl"))
-  {
-	  is_excl = 1;
-	  tmp_ns_start[strlen(tmp_ns_start) - 5]='\0';
-  }
+    {
+    is_excl = 1;
+    tmp_ns_start[strlen(tmp_ns_start) - 5]='\0';
+    }
 
   char * pch = strchr(tmp_ns_start,'^');
   char * chmin;
@@ -425,37 +433,40 @@ int job_create_nodespec(plan_job* job)
 
   while (pch != NULL)
     {
-	chmin=NULL;
-	ch = strchr(pch,',');
-	if (ch != NULL)
-		chmin=ch;
+    chmin=NULL;
+    ch = strchr(pch,',');
+    if (ch != NULL)
+      chmin=ch;
 
-	ch = strchr(pch,':');
-	if (ch != NULL && chmin==NULL)
-		chmin=ch;
-	else
-		if (ch != NULL && chmin!=NULL && ch < chmin)
-			chmin=ch;
+    ch = strchr(pch,':');
+    if (ch != NULL && chmin==NULL)
+      chmin=ch;
+    else
+      if (ch != NULL && chmin!=NULL && ch < chmin)
+        chmin=ch;
 
-	ch = strchr(pch,' ');
-	if (ch != NULL && chmin==NULL)
-		chmin=ch;
-	else
-		if (ch != NULL && chmin!=NULL && ch < chmin)
-			chmin=ch;
+    ch = strchr(pch,' ');
+    if (ch != NULL && chmin==NULL)
+      chmin=ch;
+    else
+      if (ch != NULL && chmin!=NULL && ch < chmin)
+        {
+	chmin=ch;
+        }
 
-	if (chmin == NULL)
-		to_remove=strdup(pch-1);
-	else
-		{
-		to_remove=strdup(pch);
-		to_remove[chmin-pch+1]='\0';
-		}
+    if (chmin == NULL)
+      to_remove=strdup(pch-1);
+    else
+      {
+      to_remove=strdup(pch);
+      to_remove[chmin-pch+1]='\0';
+      }
+    
     sched_log(PBSEVENT_SCHED, PBS_EVENTCLASS_JOB, "aaa", "%s", to_remove);
 
-	remove_substring(tmp_ns_start, to_remove);
+    remove_substring(tmp_ns_start, to_remove);
 
-	pch = strchr(tmp_ns_start,'^');
+    pch = strchr(tmp_ns_start,'^');
     }
 
   tmp_ns_length = strlen(tmp_ns_start);
@@ -463,59 +474,54 @@ int job_create_nodespec(plan_job* job)
   planned_node = NULL;
   num_ppn = 1;
 
-  //if (job -> sch_nodespec != NULL)
-	//  free(job -> sch_nodespec);
-
   job -> sch_nodespec = NULL;
 
 
   for (int i = 0; i < job -> req_num_nodes; i++)
     {
+    if (planned_node == job -> ninfo_arr[i])
+      num_ppn++;
 
-	if (planned_node == job -> ninfo_arr[i])
-	 num_ppn++;
+    if (planned_node != NULL && planned_node != job -> ninfo_arr[i])
+      {
+      if (job -> sch_nodespec == NULL)
+        {
+        if ((job -> sch_nodespec = (char*)malloc(tmp_ns_length + 50)) == NULL)
+          {
+          perror("Memory Allocation Error");
+          return 0;
+          }
 
-	if (planned_node != NULL && planned_node != job -> ninfo_arr[i])
-	  {
+        tmp_multi = multip_numbers(num_ppn,tmp_ns_start);
+        sprintf(job -> sch_nodespec, "host=%s:ppn=%d:%s", planned_node -> get_name(), num_ppn * job -> req_ppn,  tmp_multi);
+        free(tmp_multi);
+	}
+      else
+        {
+        if ((job -> sch_nodespec=(char*)realloc(job -> sch_nodespec,strlen(job -> sch_nodespec) + tmp_ns_length + 50)) == NULL)
+          {
+          perror("Memory Allocation Error");
+          return 0;
+          }
 
-	  if (job -> sch_nodespec == NULL)
-	    {
-		if ((job -> sch_nodespec = (char*)malloc(tmp_ns_length + 50)) == NULL)
-	      {
-	      perror("Memory Allocation Error");
-	      return 0;
-	      }
+        tmp_multi = multip_numbers(num_ppn,tmp_ns_start);
+        sprintf(job -> sch_nodespec, "%s+host=%s:ppn=%d:%s",job -> sch_nodespec, planned_node -> get_name(), num_ppn * job -> req_ppn,  tmp_multi);
+        free(tmp_multi);
+        }
 
-            tmp_multi = multip_numbers(num_ppn,tmp_ns_start);
-            sprintf(job -> sch_nodespec, "host=%s:ppn=%d:%s", planned_node -> get_name(), num_ppn * job -> req_ppn,  tmp_multi);
-            free(tmp_multi);
-	    } else
-	    {
-	    if ((job -> sch_nodespec=(char*)realloc(job -> sch_nodespec,strlen(job -> sch_nodespec) + tmp_ns_length + 50)) == NULL)
-	      {
-	      perror("Memory Allocation Error");
-	      return 0;
-	      }
+      planned_node = job -> ninfo_arr[i];
+      num_ppn=1;
+      }
 
-            tmp_multi = multip_numbers(num_ppn,tmp_ns_start);
-	    sprintf(job -> sch_nodespec, "%s+host=%s:ppn=%d:%s",job -> sch_nodespec, planned_node -> get_name(), num_ppn * job -> req_ppn,  tmp_multi);
-            free(tmp_multi);
-	    }
-
-	  planned_node = job -> ninfo_arr[i];
-	  num_ppn=1;
-	  }
-
-	if (planned_node == NULL)
-		planned_node = job -> ninfo_arr[i];
+    if (planned_node == NULL)
+      planned_node = job -> ninfo_arr[i];
     }
 
   if (planned_node == NULL)
     {
-	sched_log(PBSEVENT_SCHED, PBS_EVENTCLASS_JOB, "ERROR", "going to run job without planned_node");
-	return 0;
+    sched_log(PBSEVENT_SCHED, PBS_EVENTCLASS_JOB, "ERROR", "going to run job without planned_node");
+    return 0;
     }
-
 
   if (job -> sch_nodespec == NULL)
     {
@@ -546,15 +552,16 @@ int job_create_nodespec(plan_job* job)
 
   for (int i = 0; i < job -> req_num_nodes; i++)
     {
-	found=0;
+    found=0;
     for (int j = 0; j < distinct_num_nodes; j++)
       if (job -> ninfo_arr[i] == job -> ninfo_arr[j])
-    	 found = 1;
+        found = 1;
 
     if (found)
       {
       job -> ninfo_arr[i] = NULL;
-      } else
+      }
+    else
       {
       job -> ninfo_arr[distinct_num_nodes] = job -> ninfo_arr[i];
 
@@ -565,13 +572,15 @@ int job_create_nodespec(plan_job* job)
       }
     }
 
-  if (is_excl || job->jinfo ->is_exclusive()) {
-    if ((job -> sch_nodespec=(char*)realloc(job -> sch_nodespec,strlen(job -> sch_nodespec) + 10)) == NULL)  {
+  if (is_excl || job->jinfo ->is_exclusive())
+    {
+    if ((job -> sch_nodespec=(char*)realloc(job -> sch_nodespec,strlen(job -> sch_nodespec) + 10)) == NULL)
+      {
       perror("Memory Allocation Error");
       return 0;
       }
     sprintf(job -> sch_nodespec, "%s%s",job -> sch_nodespec, "#excl");
-  }
+    }
 
   job -> jinfo -> nodespec = job -> sch_nodespec;
   sched_log(PBSEVENT_SCHED, PBS_EVENTCLASS_JOB, "sch_nodespec", "job: %s spec: %s",job -> jinfo->job_id.c_str(),job->sch_nodespec);

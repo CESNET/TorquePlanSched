@@ -31,8 +31,8 @@ void print_resource_val(resource_req* res)
   {
   if (res != NULL)
     {
-	fprintf(stderr, "%s %lld\n", res -> name, res -> amount );
-	print_resource_val(res -> next);
+    fprintf(stderr, "%s %lld\n", res -> name, res -> amount );
+    print_resource_val(res -> next);
     }
   }
 
@@ -40,8 +40,8 @@ void print_resource_str(resource_req* res)
   {
   if (res != NULL)
     {
-	fprintf(stderr, "%s %s\n", res -> name, res -> res_str);
-	print_resource_str(res -> next);
+    fprintf(stderr, "%s %s\n", res -> name, res -> res_str);
+    print_resource_str(res -> next);
     }
   }
 
@@ -67,7 +67,7 @@ char* prop_to_string(char** sarray, int num_prop)
 
       joined = strcat(joined, sarray[i]);
       joined = strcat(joined, " ");
-	   }
+      }
 
   return joined;
   }
@@ -98,23 +98,23 @@ void log_job(plan_job* job)
 		   buffer_end,
 		   buffer_nodes
 		   );
-   } else
-   {
-   strcpy(buffer_nodes, "");
+   }
+  else
+    {
+    strcpy(buffer_nodes, "");
 
-   if (job -> ninfo_arr != NULL)
-	 {
-	 sprintf(buffer_nodes, "nodes:");
+    if (job -> ninfo_arr != NULL)
+       {
+       sprintf(buffer_nodes, "nodes:");
 
-	 for (int i = 0; i < job -> req_num_nodes; i++)
-	   sprintf(buffer_nodes, "%s %s", buffer_nodes, job -> ninfo_arr[i] -> get_name());
+       for (int i = 0; i < job -> req_num_nodes; i++)
+         sprintf(buffer_nodes, "%s %s", buffer_nodes, job -> ninfo_arr[i] -> get_name());
 
-	 sprintf(buffer_nodes, "%s, planned on:", buffer_nodes);
+       sprintf(buffer_nodes, "%s, planned on:", buffer_nodes);
 
-	 for (int i = 0; i < job -> usage; i++)
-	   sprintf(buffer_nodes, "%s %d", buffer_nodes, job -> cpu_indexes[i]);
-
-     }
+       for (int i = 0; i < job -> usage; i++)
+         sprintf(buffer_nodes, "%s %d", buffer_nodes, job -> cpu_indexes[i]);
+       }
 
    sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "queued job", "id: %d usage: %d req_nodes: %d req_ppn: %d estim_proces: %ld start_time: %s completion_time: %s %s",
 		   job -> job_id,
@@ -126,7 +126,7 @@ void log_job(plan_job* job)
     	   buffer_end,
     	   buffer_nodes
     	   );
-   }
+    }
  }
 
 void log_gap(plan_gap* gap)
@@ -143,13 +143,13 @@ void log_gap(plan_gap* gap)
     strftime(buffer_end, 30, "%Y:%m:%d %H:%M:%S", localtime(&gap -> end_time));
 
   if (gap -> end_time == LONG_MAX)
-	strcpy(buffer_end, "infim");
+    strcpy(buffer_end, "infim");
 
   if (gap -> following_job !=NULL)
-	sprintf(buffer_following, ", following job: %d", gap -> following_job -> job_id);
+    sprintf(buffer_following, ", following job: %d", gap -> following_job -> job_id);
 
   if (gap -> end_time < LONG_MAX)
-  sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "gap", "total usage: %d duration: %ld start_time: %s end_time: %s%s",
+    sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "gap", "total usage: %d duration: %ld start_time: %s end_time: %s%s",
 		  gap -> usage,
 		  gap -> duration,
 		  buffer_start,
@@ -157,19 +157,19 @@ void log_gap(plan_gap* gap)
 		  buffer_following);
 
   if (gap -> end_time == LONG_MAX)
-  sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "gap", "total usage: %d duration: infim start_time: %s end_time: %s%s",
+    sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "gap", "total usage: %d duration: infim start_time: %s end_time: %s%s",
 		  gap -> usage,
 		  buffer_start,
 		  buffer_end,
 		  buffer_following);
 
   for (int i = 0; i < gap -> num_nodes; i++)
-	  sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "gap", "      node: %s, usage: %d, mem: %ld, scratch_local: %ld",
+    sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "gap", "      node: %s, usage: %d, mem: %ld, scratch_local: %ld",
 			gap -> nodes_memory[i] -> ninfo->get_name(),
 			gap -> nodes_memory[i] -> num_cpus,
 			gap -> nodes_memory[i] -> available_mem,
 			gap -> nodes_memory[i] -> available_scratch_local);
- }
+  }
 
 void log_limit(plan_limit* limit)
   {
@@ -184,74 +184,73 @@ void log_limit(plan_limit* limit)
 		  buffer_timestamp);
 
   for (int i = 0; i < limit -> num_accounts; i++)
-      {
-	  strcpy(buffer_cpus, "");
+    {
+    strcpy(buffer_cpus, "");
 
-	  for (int j = 0; j < 8; j++)
-	  	  sprintf(buffer_cpus, "%s %d", buffer_cpus, limit->accounts[i]->num_cpus[j]);
-
+    for (int j = 0; j < 8; j++)
+      sprintf(buffer_cpus, "%s %d", buffer_cpus, limit->accounts[i]->num_cpus[j]);
 	  /*sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "limit", "      account: %s, cpus: %s",
 			limit->accounts[i]->account,
 			buffer_cpus);*/
-      }
- }
+    }
+  }
 
 
 void log_list(plan_list* list)
- {
- if (list -> type == Jobs)
+  {
+  if (list -> type == Jobs)
    sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "Jobs list", "number of jobs: %d", list -> num_items);
 
- if (list -> type == Gaps)
-   sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "Gaps list", "number of gaps: %d", list -> num_items);
+  if (list -> type == Gaps)
+    sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "Gaps list", "number of gaps: %d", list -> num_items);
 
- if (list -> type == Limits)
-   sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "Limits list", "number of limits: %d", list -> num_items);
+  if (list -> type == Limits)
+    sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "Limits list", "number of limits: %d", list -> num_items);
 
- list -> current = NULL;
- while (list_get_next(list) != NULL)
-   {
-   if (list -> type == Jobs)
-	 log_job((plan_job*) list -> current);
+  list -> current = NULL;
+  while (list_get_next(list) != NULL)
+    {
+    if (list -> type == Jobs)
+      log_job((plan_job*) list -> current);
 
-   if (list -> type == Gaps)
-	 log_gap((plan_gap*) list -> current);
+    if (list -> type == Gaps)
+      log_gap((plan_gap*) list -> current);
 
-   if (list -> type == Limits)
-	 log_limit((plan_limit*) list -> current);
-   }
- }
+    if (list -> type == Limits)
+      log_limit((plan_limit*) list -> current);
+    }
+  }
 
 void log_schedule(sched* sched)
- {
- for (int i = 0; i < sched -> num_clusters; i++)
-   {
-   sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "cluster", "num_cpus: %d running cpus: %d", sched -> clusters[i] -> num_cpus, sched -> clusters[i] -> num_running_cpus);
-   log_list(sched -> jobs[i]);
-   }
+  {
+  for (int i = 0; i < sched -> num_clusters; i++)
+    {
+    sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "cluster", "num_cpus: %d running cpus: %d", sched -> clusters[i] -> num_cpus, sched -> clusters[i] -> num_running_cpus);
+    log_list(sched -> jobs[i]);
+    }
 
- for (int i = 0; i < sched -> num_clusters; i++)
-	 log_list(sched -> gaps[i]);
+  for (int i = 0; i < sched -> num_clusters; i++)
+    log_list(sched -> gaps[i]);
 
- for (int i = 0; i < sched -> num_clusters; i++)
-	 log_list(sched -> limits[i]);
- }
+  for (int i = 0; i < sched -> num_clusters; i++)
+    log_list(sched -> limits[i]);
+  }
 
 
 void log_print_ffms(first_free_slot **first_free_slots, int num_cpus)
   {
   for (int i = 0; i < num_cpus; i++)
-	sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "ffs", "%d: %ld", i, first_free_slots[i] -> time);
+    sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "ffs", "%d: %ld", i, first_free_slots[i] -> time);
 
   for (int i = 0; i < num_cpus; i++)
-	sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "ffms", "%d: %s, %ld, cpus: %d ", i, first_free_slots[i]->ninfo->get_name(),first_free_slots[i]->available_mem, first_free_slots[i]->ninfo->get_cores_total());
+    sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "ffms", "%d: %s, %ld, cpus: %d ", i, first_free_slots[i]->ninfo->get_name(),first_free_slots[i]->available_mem, first_free_slots[i]->ninfo->get_cores_total());
   }
 
 
 void log_print_ffnot(int first_free_slot_not[], int num_cpus)
   {
   for (int i = 0; i < num_cpus; i++)
-	sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "ff not", "%d: %d", i, first_free_slot_not[i]);
+    sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "ff not", "%d: %d", i, first_free_slot_not[i]);
   }
 
 void log_server_jobs(server_info *sinfo)
@@ -266,30 +265,30 @@ void log_server_jobs(server_info *sinfo)
     if (sinfo -> jobs[i] -> state == JobNoState)
       sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, sinfo -> jobs[i] -> job_id.c_str(), "JobNoState");
 
-     if (sinfo -> jobs[i] -> state == JobQueued)
-       sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, sinfo -> jobs[i] -> job_id.c_str(), "JobQueued");
+    if (sinfo -> jobs[i] -> state == JobQueued)
+      sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, sinfo -> jobs[i] -> job_id.c_str(), "JobQueued");
 
-     if (sinfo -> jobs[i] -> state == JobRunning)
-       sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, sinfo -> jobs[i] -> job_id.c_str(), "JobRunning");
+    if (sinfo -> jobs[i] -> state == JobRunning)
+      sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, sinfo -> jobs[i] -> job_id.c_str(), "JobRunning");
 
-     if (sinfo -> jobs[i] -> state == JobHeld)
-       sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, sinfo -> jobs[i] -> job_id.c_str(), "JobHeld");
+    if (sinfo -> jobs[i] -> state == JobHeld)
+      sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, sinfo -> jobs[i] -> job_id.c_str(), "JobHeld");
 
-     if (sinfo -> jobs[i] -> state == JobWaiting)
-       sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, sinfo -> jobs[i] -> job_id.c_str(), "JobWaiting");
+    if (sinfo -> jobs[i] -> state == JobWaiting)
+      sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, sinfo -> jobs[i] -> job_id.c_str(), "JobWaiting");
 
-     if (sinfo -> jobs[i] -> state == JobTransit)
-       sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, sinfo -> jobs[i] -> job_id.c_str(), "JobTransit");
+    if (sinfo -> jobs[i] -> state == JobTransit)
+      sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, sinfo -> jobs[i] -> job_id.c_str(), "JobTransit");
 
-     if (sinfo -> jobs[i] -> state == JobExiting)
-       sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, sinfo -> jobs[i] -> job_id.c_str(), "JobExiting");
+    if (sinfo -> jobs[i] -> state == JobExiting)
+      sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, sinfo -> jobs[i] -> job_id.c_str(), "JobExiting");
 
-     if (sinfo -> jobs[i] -> state == JobSuspended)
-       sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, sinfo -> jobs[i] -> job_id.c_str(), "JobSuspended");
+    if (sinfo -> jobs[i] -> state == JobSuspended)
+      sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, sinfo -> jobs[i] -> job_id.c_str(), "JobSuspended");
 
-     if (sinfo -> jobs[i] -> state == JobCompleted)
-       sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, sinfo -> jobs[i] -> job_id.c_str(), "JobCompleted");
+    if (sinfo -> jobs[i] -> state == JobCompleted)
+      sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, sinfo -> jobs[i] -> job_id.c_str(), "JobCompleted");
 
-     i++;
+    i++;
     }
   }

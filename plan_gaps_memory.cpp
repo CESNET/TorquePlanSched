@@ -50,46 +50,45 @@ plan_gap_mem** gap_memory_create(plan_gap* gap, plan_job* job, first_free_slot *
   gap -> usage = 0;
 
   for (int j = 0; j < job -> usage; j++)
-     if (job -> cpu_indexes[j] >= 0)
-	if (first_free_slots[job -> cpu_indexes[j]] -> time < gap -> end_time)
-	  {
-	  gap -> usage++;
-	  i = job -> cpu_indexes[j];
-
-	  known_node = -1;
-	  for (int k = 0; k < num_nodes; k++)
-	    if (new_gap_mem[k] -> ninfo == first_free_slots[i] -> ninfo)
-	    	known_node = k;
-
-      if (known_node == -1)
+    if (job -> cpu_indexes[j] >= 0)
+      if (first_free_slots[job -> cpu_indexes[j]] -> time < gap -> end_time)
         {
-    	if ((new_gap_mem = (plan_gap_mem**)realloc(new_gap_mem,(num_nodes + 1) * sizeof(plan_gap_mem*))) == NULL)
+        gap -> usage++;
+        i = job -> cpu_indexes[j];
+
+        known_node = -1;
+        for (int k = 0; k < num_nodes; k++)
+          if (new_gap_mem[k] -> ninfo == first_free_slots[i] -> ninfo)
+            known_node = k;
+
+        if (known_node == -1)
           {
-          perror("Memory Allocation Error");
-          return NULL;
-          }
+          if ((new_gap_mem = (plan_gap_mem**)realloc(new_gap_mem,(num_nodes + 1) * sizeof(plan_gap_mem*))) == NULL)
+            {
+            perror("Memory Allocation Error");
+            return NULL;
+            }
 
-    	if ((new_gap_mem[num_nodes] = (plan_gap_mem*)malloc(sizeof(plan_gap_mem))) == NULL)
+          if ((new_gap_mem[num_nodes] = (plan_gap_mem*)malloc(sizeof(plan_gap_mem))) == NULL)
+            {
+            perror("Memory Allocation Error");
+            return NULL;
+            }
+
+          new_gap_mem[num_nodes] -> ninfo=first_free_slots[i] -> ninfo;;
+          new_gap_mem[num_nodes] -> available_mem=first_free_slots[i] -> available_mem;
+          new_gap_mem[num_nodes] -> available_scratch_local=first_free_slots[i] -> available_scratch_local;
+          new_gap_mem[num_nodes] -> num_cpus = 1;
+
+          num_nodes++;
+          }
+        else
           {
-          perror("Memory Allocation Error");
-          return NULL;
+          new_gap_mem[known_node] -> available_mem=first_free_slots[i] -> available_mem;
+          new_gap_mem[known_node] -> available_scratch_local=first_free_slots[i] -> available_scratch_local;
+          new_gap_mem[known_node] -> num_cpus += 1;
           }
-
-    	new_gap_mem[num_nodes] -> ninfo=first_free_slots[i] -> ninfo;;
-    	new_gap_mem[num_nodes] -> available_mem=first_free_slots[i] -> available_mem;
-    	new_gap_mem[num_nodes] -> available_scratch_local=first_free_slots[i] -> available_scratch_local;
-    	new_gap_mem[num_nodes] -> num_cpus = 1;
-
-    	num_nodes++;
-
-        } else
-        {
-        new_gap_mem[known_node] -> available_mem=first_free_slots[i] -> available_mem;
-        new_gap_mem[known_node] -> available_scratch_local=first_free_slots[i] -> available_scratch_local;
-        new_gap_mem[known_node] -> num_cpus += 1;
-
         }
-      }
 
   gap -> nodes_memory=new_gap_mem;
   gap -> num_nodes=num_nodes;
@@ -112,13 +111,13 @@ plan_gap_mem** gap_memory_create_last(plan_gap* gap, int num_first_free_slot, fi
       if (first_free_slots[i] -> ninfo ->is_down() ||  first_free_slots[i] -> ninfo ->is_offline() || first_free_slots[i] -> ninfo ->is_notusable())
         continue;
 
-	  gap -> usage++;
+      gap -> usage++;
 
       known_node = -1;
 
-	  for (int j = 0; j < num_nodes; j++)
-	    if (new_gap_mem[j] -> ninfo == first_free_slots[i] -> ninfo)
-	    	known_node = j;
+      for (int j = 0; j < num_nodes; j++)
+        if (new_gap_mem[j] -> ninfo == first_free_slots[i] -> ninfo)
+          known_node = j;
 
       if (known_node == -1)
         {
@@ -141,12 +140,12 @@ plan_gap_mem** gap_memory_create_last(plan_gap* gap, int num_first_free_slot, fi
 
     	num_nodes++;
 
-        } else
+        } 
+      else
         {
         new_gap_mem[known_node] -> available_mem = first_free_slots[i] -> available_mem;
         new_gap_mem[known_node] -> available_scratch_local = first_free_slots[i] -> available_scratch_local;
         new_gap_mem[known_node] -> num_cpus += 1;
-
         }
       }
 
@@ -162,36 +161,34 @@ void* add_mem_gap_to_gap(plan_gap *gap_target, plan_gap *gap_source)
   gap_target -> usage += gap_source -> usage;
   for (int i = 0; i < gap_source -> num_nodes; i++)
     {
-	j=0;
-	while (j < gap_target -> num_nodes && gap_source -> nodes_memory[i] -> ninfo != gap_target -> nodes_memory[j] -> ninfo)
-	  j++;
+    j=0;
+    while (j < gap_target -> num_nodes && gap_source -> nodes_memory[i] -> ninfo != gap_target -> nodes_memory[j] -> ninfo)
+      j++;
 
-	if (j < gap_target -> num_nodes)
-	  {
-	  gap_target -> nodes_memory[j] -> num_cpus += gap_source -> nodes_memory[i] -> num_cpus;
+    if (j < gap_target -> num_nodes)
+      {
+      gap_target -> nodes_memory[j] -> num_cpus += gap_source -> nodes_memory[i] -> num_cpus;
+      }
+    else
+      {
+      gap_target -> num_nodes=++j;
 
-	  } else
-	  {
-	  gap_target -> num_nodes=++j;
-
-	  if ((gap_target -> nodes_memory = (plan_gap_mem**)realloc(gap_target -> nodes_memory, j * sizeof(plan_gap_mem*))) == NULL)
+      if ((gap_target -> nodes_memory = (plan_gap_mem**)realloc(gap_target -> nodes_memory, j * sizeof(plan_gap_mem*))) == NULL)
         {
         perror("Memory Allocation Error");
         return NULL;
         }
 
-	  if ((gap_target -> nodes_memory[j - 1] = (plan_gap_mem*)malloc(sizeof(plan_gap_mem))) == NULL)
+      if ((gap_target -> nodes_memory[j - 1] = (plan_gap_mem*)malloc(sizeof(plan_gap_mem))) == NULL)
         {
         perror("Memory Allocation Error");
         return NULL;
         }
-
-	  gap_target -> nodes_memory[j - 1] -> ninfo = gap_source -> nodes_memory[i] -> ninfo;
-	  gap_target -> nodes_memory[j - 1] -> available_mem = gap_source -> nodes_memory[i] -> available_mem;
-	  gap_target -> nodes_memory[j - 1] -> available_scratch_local = gap_source -> nodes_memory[i] -> available_scratch_local;
-	  gap_target -> nodes_memory[j - 1] -> num_cpus = gap_source -> nodes_memory[i] -> num_cpus;
-
-	  }
+      gap_target -> nodes_memory[j - 1] -> ninfo = gap_source -> nodes_memory[i] -> ninfo;
+      gap_target -> nodes_memory[j - 1] -> available_mem = gap_source -> nodes_memory[i] -> available_mem;
+      gap_target -> nodes_memory[j - 1] -> available_scratch_local = gap_source -> nodes_memory[i] -> available_scratch_local;
+      gap_target -> nodes_memory[j - 1] -> num_cpus = gap_source -> nodes_memory[i] -> num_cpus;
+      }
     }
 
   return gap_target;
@@ -207,39 +204,38 @@ void adjust_gap_memory(plan_gap *gap_new,plan_gap *last_gap)
 
   //nastavime plnou pamet dire
   for (int i = 0; i < gap_new -> num_nodes; i++)
-	gap_new -> nodes_memory[i] -> updated=0;
+    gap_new -> nodes_memory[i] -> updated=0;
 
   //najdem prvni job v tomto case
-  while (neighbour_job -> predeccessor != NULL &&
-		 neighbour_job -> predeccessor -> start_time == neighbour_job -> start_time)
+  while (neighbour_job -> predeccessor != NULL && neighbour_job -> predeccessor -> start_time == neighbour_job -> start_time)
     neighbour_job = neighbour_job -> predeccessor;
 
   //pamet vsech jobu v tomto case na uzlu kde je tato dira bude odebrana z cele pameti uzlu
   while (neighbour_job != NULL)
     {
-	for (int i = 0; i < gap_new -> num_nodes; i++)
-	  for (int j = 0; j < neighbour_job -> req_num_nodes; j++)
-	    if (gap_new -> nodes_memory[i] -> ninfo == neighbour_job -> ninfo_arr[j])
-	      {
-		  //pokud jsem tu jeste nebyl tak nastavim plnou pamet a od ty budu odecitat
-		  if (gap_new -> nodes_memory[i] -> updated == 0)
-		    {
-		    gap_new -> nodes_memory[i] -> available_mem = get_node_mem(gap_new -> nodes_memory[i] -> ninfo);
-		    gap_new -> nodes_memory[i] -> available_scratch_local = get_node_scratch_local(gap_new -> nodes_memory[i] -> ninfo);
-		    gap_new -> nodes_memory[i] -> updated = 1;
-		    }
+    for (int i = 0; i < gap_new -> num_nodes; i++)
+      for (int j = 0; j < neighbour_job -> req_num_nodes; j++)
+	if (gap_new -> nodes_memory[i] -> ninfo == neighbour_job -> ninfo_arr[j])
+	  {
+	  //pokud jsem tu jeste nebyl tak nastavim plnou pamet a od ty budu odecitat
+	  if (gap_new -> nodes_memory[i] -> updated == 0)
+            {
+            gap_new -> nodes_memory[i] -> available_mem = get_node_mem(gap_new -> nodes_memory[i] -> ninfo);
+            gap_new -> nodes_memory[i] -> available_scratch_local = get_node_scratch_local(gap_new -> nodes_memory[i] -> ninfo);
+            gap_new -> nodes_memory[i] -> updated = 1;
+            }
 
-		  gap_new -> nodes_memory[i] -> available_mem -= neighbour_job -> req_mem;
+          gap_new -> nodes_memory[i] -> available_mem -= neighbour_job -> req_mem;
 		  //gap_new -> nodes_memory[i] -> available_scratch_local -= neighbour_job -> req_scratch_local;
-	      }
+          }
 
 	if (neighbour_job -> successor != NULL && neighbour_job -> start_time == neighbour_job -> successor -> start_time)
 	  {
 	  neighbour_job = neighbour_job -> successor;
-	  } else
+	  }
+        else
 	  {
 	  neighbour_job=NULL;
 	  }
     }
   }
-
