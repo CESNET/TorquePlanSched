@@ -58,10 +58,13 @@ void free_job(plan_job* job)
 
   if (job->fixed_nname_arr != NULL)
     for (int i=0; i< job->req_num_nodes; i++)
-      if (job->fixed_nname_arr[i]!= NULL)
+      if (job->fixed_nname_arr[i]!= NULL) {
         free(job->fixed_nname_arr[i]);
+        job->fixed_nname_arr[i] = NULL;
+      }
     
   free(job->fixed_nname_arr);
+  job->fixed_nname_arr = NULL;
 
   free(job);
   }

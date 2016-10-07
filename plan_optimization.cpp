@@ -63,8 +63,7 @@ bool job_backup_fixnodes(plan_job* job)
       }
     
     if (job -> fixed_nname_arr[i] != NULL)
-      free(job -> fixed_nname_arr[i]);
-    
+      free(job -> fixed_nname_arr[i]);    
     job -> fixed_nname_arr[i] = NULL;
     }
   
@@ -76,8 +75,10 @@ bool job_restore_fixnodes(plan_job* job)
   if (job -> fixed_nname_arr_backup != NULL)
     {
     for (int i=0; i< job->req_num_nodes; i++)
-      if (job->fixed_nname_arr[i]!= NULL)
+      if (job->fixed_nname_arr[i]!= NULL) {
         free(job->fixed_nname_arr[i]);
+        job->fixed_nname_arr[i] = NULL;
+      }
     
     free(job -> fixed_nname_arr);
     job -> fixed_nname_arr = job -> fixed_nname_arr_backup;
