@@ -533,7 +533,12 @@ long get_walltime_limit_min(std::set<std::string> properties)
   for (it = excluded_properties.begin(); it != excluded_properties.end(); it++)
     {
     if (is_prefix(*it,"min_"))
-      ret = decode_time(strdup((*it).c_str()+4));
+      {
+        char *value;
+        value = strdup((*it).c_str()+4);
+        ret = decode_time(value);
+        free(value);
+      }
     }
 
   return ret;
@@ -549,7 +554,12 @@ long get_walltime_limit_max(std::set<std::string> properties)
   for (it = excluded_properties.begin(); it != excluded_properties.end(); it++)
     {
     if (is_prefix(*it,"max_"))
-      ret = decode_time(strdup((*it).c_str()+4));
+      {
+        char  *value;
+        value = strdup((*it).c_str()+4);
+        ret = decode_time(value);
+        free(value);
+      }
     }
 
   return ret;
