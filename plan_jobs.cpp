@@ -108,6 +108,8 @@ void* job_fillin(plan_job* job, JobInfo *assigned_job, time_t start_time, time_t
     job -> req_gpu = find_resource_req(assigned_job -> resreq, "gpu") -> amount;
 
   job -> req_ppn = job -> usage / job -> req_num_nodes;
+  if (job -> req_ppn < 1)
+      job -> req_ppn = 1;
 
   job -> original_req_ppn = 0;
 
