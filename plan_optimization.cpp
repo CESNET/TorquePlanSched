@@ -99,6 +99,9 @@ void job_free_fixnodes_backup(sched* schedule, int k)
     {
     list_get_next(schedule -> jobs[k]);
     job = (plan_job*)schedule -> jobs[k] -> current;
+    
+    if (job == NULL)
+        break;
 
     if (job -> fixed_nname_arr_backup != NULL)
       {
@@ -407,13 +410,16 @@ int plan_optimization(sched* schedule, time_t time_now)
           {
           restore_job_order(schedule, cl_number, backup);
           job_free_fixnodes_backup(schedule, cl_number);
-          update_sched(schedule, cl_number, time_now);
+          if (update_sched(schedule, cl_number, time_now) != 0)
+              update_sched(schedule, cl_number, time_now);
           evaluation_after = evaluate_schedule(schedule);
-                
+#if 0
+    # prioritni joby tuto hlasku zpusobi vzdy
           if (evaluation_before.response_time != evaluation_after.response_time ||
               evaluation_before.wait_time != evaluation_after.wait_time ||
 	      evaluation_before.slowdown != evaluation_after.slowdown)
             sched_log(PBSEVENT_DEBUG2, PBS_EVENTCLASS_REQUEST, "Optimization Error", "BACKUP FAILED");
+#endif          
 	  }
 	}
       else
