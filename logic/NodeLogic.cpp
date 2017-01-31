@@ -210,6 +210,10 @@ CheckResult NodeLogic::has_resc(const pars_prop *prop) const
     else
       return CheckNonFit;
     }
+  
+  //already checked
+  if (strcmp(prop->name,"scratch")==0)
+    return CheckAvailable;
 
   Resource *resc;
   if ((resc = this->get_resource(prop->name)) == NULL)
