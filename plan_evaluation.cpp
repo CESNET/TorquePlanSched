@@ -18,6 +18,7 @@
 #include <string.h>
 #include <time.h>
 #include "misc.h"
+#include <math.h>
 
 #include "plan_list_operations.h"
 #include "plan_fairshare.h"
@@ -36,7 +37,7 @@ double job_response_time(plan_job* job, bool real)
 
 double job_wait_time(plan_job* job)
   {
-  return job -> start_time - job -> jinfo -> qtime;
+  return (job -> start_time - job -> jinfo -> qtime) * sqrt(job->req_ppn * job->req_num_nodes); 
   }
 
 double job_slowdown_time(plan_job* job, bool real)
@@ -51,7 +52,7 @@ double job_slowdown_time(plan_job* job, bool real)
   if (completion_time - job -> start_time < 1)
 	return (completion_time - job -> jinfo -> qtime) / 1;
 
-  return ((completion_time - job -> jinfo -> qtime) * 1.0) / ((completion_time - job -> start_time) * 1.0);
+  return (((completion_time - job -> jinfo -> qtime) * 1.0) / ((completion_time - job -> start_time) * 1.0)) * sqrt(job->req_ppn * job->req_num_nodes);
   }
 
 
